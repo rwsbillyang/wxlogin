@@ -1,0 +1,65 @@
+{
+  "name": "wxlogin",
+  "version": "1.0.0",
+  "description": "wechat(weixin) oauth login for frontend",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rwsbillyang/wxlogin.git"
+  },
+  "keywords": [
+    "react",
+    "wechat/weixin oauth login"
+  ],
+  "author": "rwsbillyang@qq.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rwsbillyang/wxlogin/issues"
+  },
+  "homepage": "https://github.com/rwsbillyang/wxlogin#readme",
+  "type": "module",
+  "dependencies": {
+    "react": "^17.0.0 || ^18.0.0",
+    "usecache": "file:../usecache/dist",
+    "framework7": "^6.0.0 || ^7.0.7",
+    "framework7-icons": "^5.0.3",
+    "framework7-react": "^7.0.7",
+    "react-dom": "^18.0.0",
+    "tslib": "^2.4.0",
+    "use-bus": "^2.5.1",
+    "qrcode.react": "^3.1.0",
+    "react-use-websocket": "^2.9.1"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "pretest": "npm run build",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint src test --ext .js,.jsx,.ts,.tsx",
+    "lint:fix": "eslint src test --ext .js,.jsx,.ts,.tsx --fix",
+    "clean": "rm -rf dist",
+    "copyDts":"cp -R src/datatype dist/",
+    "build": "tsc",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "devDependencies": {
+    "@types/jest": "^27.0.2",
+    "@types/react": "^18.0.18",
+    "@typescript-eslint/eslint-plugin": "^5.3.0",
+    "@typescript-eslint/parser": "^5.3.0",
+    "eslint": "^7.32.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-import-resolver-typescript": "^2.5.0",
+    "eslint-plugin-import": "^2.25.2",
+    "jest": "^27.3.1",
+    "ts-jest": "^27.0.7",
+    "typescript": "^4.8.3"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node"
+  }
+}
