@@ -1,6 +1,6 @@
 {
-  "name": "wxlogin",
-  "version": "1.0.0",
+  "name": "@rwsbillyang/wxlogin",
+  "version": "0.9.1",
   "description": "wechat(weixin) oauth login for frontend",
   "repository": {
     "type": "git",
@@ -16,50 +16,117 @@
     "url": "https://github.com/rwsbillyang/wxlogin/issues"
   },
   "homepage": "https://github.com/rwsbillyang/wxlogin#readme",
-  "type": "module",
-  "dependencies": {
+  "peerDependencies": {
     "react": "^17.0.0 || ^18.0.0",
-    "usecache": "file:../usecache/dist",
-    "framework7": "^6.0.0 || ^7.0.7",
-    "framework7-icons": "^5.0.3",
-    "framework7-react": "^7.0.7",
-    "react-dom": "^18.0.0",
+    "react-dom": "^17.0.0 || ^18.0.0",
+    "@rwsbillyang/usecache": "^0.9.1",
+    "framework7": "^6.0.0 || ^7.0.0",
+    "framework7-icons": "^5.0.0",
+    "framework7-react": "^6.0.0 ||^7.0.0",
     "tslib": "^2.4.0",
     "use-bus": "^2.5.1",
     "qrcode.react": "^3.1.0",
-    "react-use-websocket": "^2.9.1"
+    "react-use-websocket": "^2.0.0 || ^3.0.0 || ^4.0.0"
   },
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "sideEffects": [
+    "dist/index.css"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/index.d.ts",
+  "typings": "./dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "package.json",
+    "README.md",
+    "global.d.ts"
+  ],
+  "exports":{
+    ".":{
+      "import": "./dist/esm/index.js",
+      "require": "./dist/index.js"
+    }
+  },
+  "workspaces": [
+    "playground"
   ],
   "scripts": {
-    "pretest": "npm run build",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "lint": "eslint src test --ext .js,.jsx,.ts,.tsx",
-    "lint:fix": "eslint src test --ext .js,.jsx,.ts,.tsx --fix",
-    "clean": "rm -rf dist",
-    "copyDts":"cp -R src/datatype dist/",
-    "build": "tsc",
-    "prepublishOnly": "npm run clean && npm run build"
+    "storybook": "start-storybook -p 6006",
+    "build": "tsup",
+    "dev": "npm run dev -w playground",
+    "dev:use-bundle": "run-p tsup-w dev-pack",
+    "build:css": "npm run build:scss && npm run build:postcss && rimraf rf ./src/index.css",
+    "build:scss": "sass --no-source-map --style=compressed src/styles/main.scss src/index.css",
+    "build:postcss": "postcss src/index.css -o dist/index.css",
+    "build:vite": "vite build",
+    "build:storybook": "build-storybook",
+    "lint": "eslint --ext .ts,.tsx ./src",
+    "tsup-w": "tsup --watch",
+    "dev-pack": "npm run dev:usepack -w playground",
+    "prepare": "chmod a+x .husky/* && husky install",
+    "prepublishOnly": "npm run build",
+    "release": "bumpp --commit --tag --push",
+    "stylelint": "stylelint src/**/*.css",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@types/jest": "^27.0.2",
-    "@types/react": "^18.0.18",
-    "@typescript-eslint/eslint-plugin": "^5.3.0",
-    "@typescript-eslint/parser": "^5.3.0",
-    "eslint": "^7.32.0",
-    "eslint-config-airbnb-base": "^14.2.1",
-    "eslint-import-resolver-typescript": "^2.5.0",
-    "eslint-plugin-import": "^2.25.2",
-    "jest": "^27.3.1",
-    "ts-jest": "^27.0.7",
-    "typescript": "^4.8.3"
+    "@babel/core": "^7.19.0",
+    "@babel/plugin-transform-runtime": "^7.18.10",
+    "@commitlint/cli": "^17.1.2",
+    "@commitlint/config-conventional": "^17.1.0",
+    "@storybook/addon-actions": "^6.5.10",
+    "@storybook/addon-docs": "^6.5.10",
+    "@storybook/addon-essentials": "^6.5.10",
+    "@storybook/addon-links": "^6.5.10",
+    "@storybook/builder-vite": "^0.2.2",
+    "@storybook/react": "^6.5.10",
+    "@swc/core": "^1.2.248",
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^12.1.5",
+    "@testing-library/user-event": "^14.4.3",
+    "@types/react": "^17.0.47",
+    "@types/react-dom": "^17.0.15",
+    "@typescript-eslint/eslint-plugin": "^5.36.2",
+    "@typescript-eslint/parser": "^5.36.2",
+    "@vitest/ui": "^0.23.1",
+    "autoprefixer": "^10.4.8",
+    "babel-loader": "^8.2.5",
+    "bumpp": "^8.2.1",
+    "core-js": "^3.25.0",
+    "cssnano": "^5.1.13",
+    "esbuild-plugin-babel": "^0.2.3",
+    "eslint": "^8.23.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-airbnb-typescript": "^17.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-jsx-a11y": "^6.6.1",
+    "eslint-plugin-react": "^7.31.7",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "husky": "^8.0.1",
+    "jsdom": "^20.0.0",
+    "lint-staged": "^13.0.3",
+    "npm-run-all": "^4.1.5",
+    "path": "^0.12.7",
+    "postcss": "^8.4.16",
+    "postcss-cli": "^10.0.0",
+    "postcss-loader": "^7.0.1",
+    "postcss-nested": "^5.0.6",
+    "react-element-to-jsx-string": "^15.0.0",
+    "sass": "^1.54.8",
+    "stylelint": "^14.11.0",
+    "stylelint-config-prettier": "^9.0.3",
+    "stylelint-config-standard": "^28.0.0",
+    "stylelint-prettier": "^2.0.0",
+    "tsup": "^6.2.3",
+    "typescript": "~4.8.3",
+    "vite": "3.0.9",
+    "vite-plugin-dts": "^1.4.1",
+    "vitest": "^0.23.1",
+    "esbuild-wasm":"latest"
   },
-  "jest": {
-    "preset": "ts-jest",
-    "testEnvironment": "node"
+  "overrides": {
+    "esbuild":"npm:esbuild-wasm@latest"
   }
 }

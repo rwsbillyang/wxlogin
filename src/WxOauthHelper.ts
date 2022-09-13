@@ -1,4 +1,4 @@
-import {CacheStorage, StorageType, Cache} from "usecache"
+import {CacheStorage, StorageType, Cache} from "@rwsbillyang/usecache"
 import { WxLoginConfig } from "./Config"
 import { AuthBean } from "./datatype/AuthBean"
 import { GuestOAuthBean } from "./datatype/GuestOAuthBean"

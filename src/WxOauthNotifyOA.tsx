@@ -1,7 +1,7 @@
 import { Block, f7, Page } from 'framework7-react';
 import React, { useState } from 'react';
 
-import {DataBox, StorageType, CODE, getDataFromBox, UseCacheConfig} from "usecache"
+import {DataBox, StorageType, CODE, getDataFromBox, UseCacheConfig} from "@rwsbillyang/usecache"
 
 
 import { getValue, WxGuestAuthHelper } from './WxOauthHelper';

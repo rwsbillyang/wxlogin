@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 import { Block, Page } from 'framework7-react';
 
-import {currentHost, StorageType} from "usecache"
+import {currentHost, StorageType} from "@rwsbillyang/usecache"
 
 import { saveValue, WxAuthHelper, WxGuestAuthHelper } from './WxOauthHelper';
 import { LoginParam } from './datatype/LoginParam';

@@ -1,42 +1,46 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
-    "target": "es2019",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-   "isolatedModules": true,
-    "outDir": "dist",
-    "jsx": "react", // 在 .tsx文件里支持JSX
-    "forceConsistentCasingInFileNames": true,
-    "noImplicitAny": false, // 在表达式和声明上有隐含的 any类型时报错。（默认为false，个人建议也为false，可以兼容之前的js代码，这里改为true是为了我自己检测哪些类型需要处理）
-    "noImplicitReturns": true,
-    "noImplicitThis": true,
-    "importHelpers": true,
-    "strictNullChecks": true,
-    "noUnusedLocals": true,
+    "baseUrl": "/",
+    "target": "ES2015",
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "skipDefaultLibCheck": true,
+    "noEmit": true,
+    "sourceMap": true,
     "allowJs": true,
-    "experimentalDecorators": true,
-    "rootDirs": [
-      "src",
-      "test"
-    ],
-    "declaration": true,
+    "skipLibCheck": true,
+    "strictNullChecks": true,
+    "esModuleInterop": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noUnusedLocals": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": false,
+    "noImplicitThis": true,
+    "noImplicitAny": false,
+    "importHelpers": false,
+    "resolveJsonModule": true,
+    "isolatedModules": false,
+    "jsx": "react",
+    "paths": {
+      "@rwsbillyang/wxlogin": [
+        "./src"
+      ],
+      "@rwsbillyang/wxlogin/*": [
+        "./src/*"
+      ]
+    }
   },
   "include": [
-    "./src/**/*", // 这个表示处理根目录的src目录下所有的.ts和.tsx文件，并不是所有文件
-    //"./declaration.d.ts",
-    "typings/**/*",
-],
-"exclude": [ //排除文件
+    "**/*"
+  ],
+  "exclude": [
     "node_modules",
     "build",
     "dist",
-    "scripts",
-    "acceptance-tests",
-    "webpack",
-    "jest",
-    "src/setupTests.ts",
-    "*.js"
-]
+    "__unconfig_vite.config.ts"
+  ]
 }

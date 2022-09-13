@@ -1,7 +1,7 @@
 
 
 import { f7 } from "framework7-react"
-import { UseCacheConfig } from "usecache"
+import { UseCacheConfig } from "@rwsbillyang/usecache"
 import { WxLoginConfig } from "./Config"
 
 import { CorpParams } from "./datatype/CorpParams"
@@ -17,7 +17,9 @@ export const WebAppHelper = {
 
         //update cache key prefix into UseCacheConfig
         const corpId_ = params?.corpId || params?.appId || params?.suiteId || 'nocorp'
-        UseCacheConfig.cacheKeyPrefix = params?.agentId? `${WxLoginConfig.AppKeyPrefix}/${corpId_}/${params.agentId}/` : `${WxLoginConfig.AppKeyPrefix}/${corpId_}/`
+        const key = params?.agentId? `${WxLoginConfig.AppKeyPrefix}/${corpId_}/${params.agentId}/` : `${WxLoginConfig.AppKeyPrefix}/${corpId_}/`
+        UseCacheConfig.cacheKeyPrefix = key
+        if(WxLoginConfig.EnableLog) console.log("set UseCacheConfig.cacheKeyPrefix = "+key)
     },
     getCorpParams(): CorpParams | undefined {
         const p = sessionStorage.getItem(`${WxLoginConfig.AppKeyPrefix}/corpParams`)

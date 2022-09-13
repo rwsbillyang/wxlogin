@@ -1,5 +1,5 @@
 
-import {DataBox, StorageType, CODE, getDataFromBox, UseCacheConfig} from "usecache"
+import {DataBox, StorageType, CODE, getDataFromBox, UseCacheConfig} from "@rwsbillyang/usecache"
 
 
 import { Block, f7, Page } from 'framework7-react';

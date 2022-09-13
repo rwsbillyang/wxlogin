@@ -2,7 +2,7 @@
 import { Router } from "framework7/types";
 
 import { f7 } from "framework7-react";
-import { StorageType } from "usecache";
+import { StorageType } from "@rwsbillyang/usecache";
 
 import { WxOauthLoginPageOA } from "./WxOauthLoginPageOA";
 import { PathNeedRoles } from "./datatype/PathNeedRoles";
@@ -191,8 +191,7 @@ function tryLogin(ctx: Router.RouteCallbackCtx,
  * 若未设置，将提示出错
  */
  function checkAndSetCorpParams(toUrl: string, exceptions?: string[]) {
-    const DebugCache = false
-    if (DebugCache) console.log("checkAndSetCorpParams call getCorpParams! toUrl=" + toUrl)
+    if (WxLoginConfig.EnableLog) console.log("checkAndSetCorpParams call getCorpParams! toUrl=" + toUrl)
     //若还没有CorpParams，则解析url参数，设置它；若已存在则忽略
     //对于exceptions中的例外路径，则设置一个fake CorpParams
     const p = WebAppHelper.getCorpParams()
@@ -205,21 +204,21 @@ function tryLogin(ctx: Router.RouteCallbackCtx,
         if (exceptions && exceptions.length > 0) {
           for(let i =0; i < exceptions.length; i++){
             const e = exceptions[i]
-            if (DebugCache) console.log("get exception: "+e)
+            if (WxLoginConfig.EnableLog) console.log("get exception: "+e)
             if (toUrl.indexOf(e) >= 0) {
               const fakeParams: CorpParams = { appId: "wxAdmin" }
-              if (DebugCache) console.log("set fake CorpParams done")
+              if (WxLoginConfig.EnableLog) console.log("set fake CorpParams done")
               WebAppHelper.setCorpParams(fakeParams)//设置一个fake CorpParams
               return true
             }
           }
         }
   
-        if (DebugCache) console.log("no CorpParams in url and sessionStorage:, toUrl=" + toUrl)
+        if (WxLoginConfig.EnableLog) console.log("no CorpParams in url and sessionStorage:, toUrl=" + toUrl)
         return false
       } else {
         WebAppHelper.setCorpParams(params)
-        if (DebugCache) console.log("setCorpParams done")
+        if (WxLoginConfig.EnableLog) console.log("setCorpParams done")
       }
     }
     return true

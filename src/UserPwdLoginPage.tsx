@@ -9,7 +9,7 @@ import {
     BlockFooter,
 } from 'framework7-react';
 
-import {DataBox, StorageType, CODE, getDataFromBox, UseCacheConfig} from "usecache"
+import {DataBox, StorageType, CODE, getDataFromBox, UseCacheConfig} from "@rwsbillyang/usecache"
 
 
 import { JumpHandly } from './JumpHandly';

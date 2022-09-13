@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Block, Button, f7, Page } from 'framework7-react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 
-import {CODE, DataBox, fetchWithLoading, getDataFromBox, StorageType, UseCacheConfig} from "usecache"
+import {CODE, DataBox, fetchWithLoading, getDataFromBox, StorageType, UseCacheConfig} from "@rwsbillyang/usecache"
 
 import QRCode from 'qrcode.react';
 

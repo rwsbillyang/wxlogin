@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import { CODE, DataBox, getDataFromBox, CacheStorage, currentHost, UseCacheConfig } from 'usecache'
+import { CODE, DataBox, getDataFromBox, CacheStorage, currentHost, UseCacheConfig } from "@rwsbillyang/usecache"
 
 import { f7 } from 'framework7-react';
 import { RequestResponse } from 'framework7/types';
@@ -238,7 +238,7 @@ export function useWxJsSdk(jsapiList: string[] = defaultJsApiList) {
 function wxConfig(isWxWorkApp: boolean, data: JsSignature, params?: CorpParams, corpId?: string, agentId?: number, jsapiList: string[] = defaultJsApiList) {
     wx.checkJsApi({
         jsApiList: jsapiList, // 需要检测的JS接口列表
-        success: function (res) {
+        success: function () {
             // 以键值对的形式返回，可用的api值true，不可用为false
             // 如：{"checkResult":{"chooseImage":true},"errMsg":"checkJsApi:ok"}
             //console.log(res)
