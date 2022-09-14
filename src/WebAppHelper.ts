@@ -16,10 +16,7 @@ export const WebAppHelper = {
         sessionStorage.setItem(`${WxLoginConfig.AppKeyPrefix}/corpParams`, str)
 
         //update cache key prefix into UseCacheConfig
-        const corpId_ = params?.corpId || params?.appId || params?.suiteId || 'nocorp'
-        const key = params?.agentId? `${WxLoginConfig.AppKeyPrefix}/${corpId_}/${params.agentId}/` : `${WxLoginConfig.AppKeyPrefix}/${corpId_}/`
-        UseCacheConfig.cacheKeyPrefix = key
-        if(WxLoginConfig.EnableLog) console.log("set UseCacheConfig.cacheKeyPrefix = "+key)
+        WebAppHelper.setKeyPrefixByCorpParams(params)
     },
     getCorpParams(): CorpParams | undefined {
         const p = sessionStorage.getItem(`${WxLoginConfig.AppKeyPrefix}/corpParams`)
@@ -34,13 +31,14 @@ export const WebAppHelper = {
         if(WxLoginConfig.EnableLog) console.log("no corpId or agentId, isWxWorkApp return false")
         return false //公众号模式
     },
-    // getKeyPrefix(): string{ //主要用于localStorage存储空间的区分，sessionStorage不需要，因为关闭后再打开数据就没了
-    //     if(DEBUG) console.log("getKeyPrefix call getCorpParams")
-    //     const p = WebAppHelper.getCorpParams()
-    //     const corpId_ = p?.corpId || p?.appId || p?.suiteId || 'nocorp'
-    //     const key = p?.agentId? `${AppKeyPrefix}/${corpId_}/${p.agentId}/` : `${AppKeyPrefix}/${corpId_}/`
-    //     return key
-    // },
+
+    setKeyPrefixByCorpParams(params: CorpParams){ 
+        const corpId_ = params?.corpId || params?.appId || params?.suiteId || 'nocorp'
+        const key = params?.agentId? `${WxLoginConfig.AppKeyPrefix}/${corpId_}/${params.agentId}/` : `${WxLoginConfig.AppKeyPrefix}/${corpId_}/`
+        UseCacheConfig.cacheKeyPrefix = key
+
+        if(WxLoginConfig.EnableLog) console.log("set UseCacheConfig.cacheKeyPrefix = "+key)
+    },
     
     //prefix: ?, &
     getCorpParamsUrlQuery(prefix: string): string {

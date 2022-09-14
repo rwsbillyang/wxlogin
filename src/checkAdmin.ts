@@ -138,10 +138,10 @@ export function checkAdmin(ctx: Router.RouteCallbackCtx,
     //检查路径中是否包含需要登录的字符
     const roles = rolesNeededByPath(toPath)
     if (roles) {
-        if (WxAuthHelper.hasRoles(roles))
-            ctx.resolve({ "component": component }) //已登录
+        if (WxAuthHelper.hasRoles(roles)) //已登录
+            ctx.resolve({ "component": component })
         else {
-            if (WxLoginConfig.EnableLog) console.log("securedRoute checkAdmin: not logined, to LoginPage from " + ctx.to.url)
+            if (WxLoginConfig.EnableLog) console.log("securedRoute checkAdmin: need roles="+ roles +", goto LoginPage from " + ctx.to.url)
             ctx.resolve({ "component": loginComponent }, p)
         }
     } else {
@@ -220,6 +220,8 @@ function tryLogin(ctx: Router.RouteCallbackCtx,
         WebAppHelper.setCorpParams(params)
         if (WxLoginConfig.EnableLog) console.log("setCorpParams done")
       }
+    }else{
+        WebAppHelper.setKeyPrefixByCorpParams(p)
     }
     return true
   }

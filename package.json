@@ -1,6 +1,6 @@
 {
   "name": "@rwsbillyang/wxlogin",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "description": "wechat(weixin) oauth login for frontend",
   "repository": {
     "type": "git",
@@ -19,7 +19,7 @@
   "peerDependencies": {
     "react": "^17.0.0 || ^18.0.0",
     "react-dom": "^17.0.0 || ^18.0.0",
-    "@rwsbillyang/usecache": "^0.9.1",
+    "@rwsbillyang/usecache": "^0.9.2",
     "framework7": "^6.0.0 || ^7.0.0",
     "framework7-icons": "^5.0.0",
     "framework7-react": "^6.0.0 ||^7.0.0",
