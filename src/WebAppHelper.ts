@@ -1,9 +1,7 @@
 
 
 import { f7 } from "framework7-react"
-import { UseCacheConfig } from "@rwsbillyang/usecache"
 import { WxLoginConfig } from "./Config"
-
 import { CorpParams } from "./datatype/CorpParams"
 
 
@@ -14,9 +12,6 @@ export const WebAppHelper = {
     setCorpParams(params: CorpParams) {
         const str = JSON.stringify(params)
         sessionStorage.setItem(`${WxLoginConfig.AppKeyPrefix}/corpParams`, str)
-
-        //update cache key prefix into UseCacheConfig
-        WebAppHelper.setKeyPrefixByCorpParams(params)
     },
     getCorpParams(): CorpParams | undefined {
         const p = sessionStorage.getItem(`${WxLoginConfig.AppKeyPrefix}/corpParams`)
@@ -27,17 +22,18 @@ export const WebAppHelper = {
         if(WxLoginConfig.EnableLog) console.log("isWxWorkApp call getCorpParams")
         const p = WebAppHelper.getCorpParams()
         if(p?.corpId && p?.agentId) return true //企业微信模式
-        //if(p?.appId) return false //公众号模式
-        if(WxLoginConfig.EnableLog) console.log("no corpId or agentId, isWxWorkApp return false")
+       // if(WxLoginConfig.EnableLog) console.log("no corpId or agentId, isWxWorkApp return false")
         return false //公众号模式
     },
 
-    setKeyPrefixByCorpParams(params: CorpParams){ 
+    //获取cacheKeyPrefix，用于注入useCacheConfig中
+    getKeyPrefix(){ 
+        const params = WebAppHelper.getCorpParams()
         const corpId_ = params?.corpId || params?.appId || params?.suiteId || 'nocorp'
         const key = params?.agentId? `${WxLoginConfig.AppKeyPrefix}/${corpId_}/${params.agentId}/` : `${WxLoginConfig.AppKeyPrefix}/${corpId_}/`
-        UseCacheConfig.cacheKeyPrefix = key
 
-        if(WxLoginConfig.EnableLog) console.log("set UseCacheConfig.cacheKeyPrefix = "+key)
+        //if(WxLoginConfig.EnableLog) console.log("WebAppHelper: getKeyPrefix(): "+key)
+        return key
     },
     
     //prefix: ?, &

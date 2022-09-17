@@ -190,7 +190,7 @@ function tryLogin(ctx: Router.RouteCallbackCtx,
  * 可以通过exceptions设置例外不检查的路径，如“/wx/admin”，此时将这只一个默认的参数
  * 若未设置，将提示出错
  */
- function checkAndSetCorpParams(toUrl: string, exceptions?: string[]) {
+function checkAndSetCorpParams(toUrl: string, exceptions?: string[]) {
     if (WxLoginConfig.EnableLog) console.log("checkAndSetCorpParams call getCorpParams! toUrl=" + toUrl)
     //若还没有CorpParams，则解析url参数，设置它；若已存在则忽略
     //对于exceptions中的例外路径，则设置一个fake CorpParams
@@ -220,8 +220,6 @@ function tryLogin(ctx: Router.RouteCallbackCtx,
         WebAppHelper.setCorpParams(params)
         if (WxLoginConfig.EnableLog) console.log("setCorpParams done")
       }
-    }else{
-        WebAppHelper.setKeyPrefixByCorpParams(p)
     }
     return true
   }

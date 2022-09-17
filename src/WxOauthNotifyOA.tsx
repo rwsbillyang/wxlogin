@@ -15,7 +15,9 @@ import { LoginType } from './datatype/LoginType';
 import { LoginParam } from './datatype/LoginParam';
 import { NeedUserInfoType } from './datatype/NeedUserInfoType';
 import { GuestOAuthBean } from './datatype/GuestOAuthBean';
-import { pageCenter3 } from './style';
+import { pageCenter } from './style';
+import { WxLoginConfig } from './Config';
+import { WebAppHelper } from './WebAppHelper';
 
 /**
  * 适用于公众号登录
@@ -79,9 +81,15 @@ export default (props: any) => {
         console.log("from=" + from)
 
         if (!from) {
-            setMsg("登录成功，请关闭窗口重新打开")
+            setMsg("登录成功，请关闭后重新打开")
             console.warn("no from")
             //f7.dialog.alert("登录成功，请关闭窗口重新打开")
+            return false
+        }
+
+        if(!WxLoginConfig.backToFromAfterOAuth){
+            setMsg("登录成功，因配置不跳回from")
+            console.log("WxLoginConfig.backToFromAfterOAuth="+WxLoginConfig.backToFromAfterOAuth)
             return false
         }
 
@@ -133,7 +141,7 @@ export default (props: any) => {
 
         const stateInSession = getValue("state")
         if (state !== stateInSession) {
-            setMsg("页面可能已过期，可直接关闭")
+            setMsg("页面已过期")
             console.warn("state=" + state + ", stateInSession=" + stateInSession)
             return false
         }
@@ -148,12 +156,18 @@ export default (props: any) => {
             return false
         }
 
+        // console.log("WxOauthNotifyOA.pageInit: UseCacheConfig.EnableLog=" + UseCacheConfig.EnableLog)
+        // console.log("WxOauthNotifyOA.pageInit: WxLoginConfig=" + JSON.stringify(WxLoginConfig))
+        // console.log("WxOauthNotifyOA.pageInit: coprParams=" + JSON.stringify(WebAppHelper.getCorpParams()))
+
         if(step === '1'){
             //进行第二步认证：目的在于获取用户信息
             if (needEnterStep2 === '1') {
                 //准备进入step2，表示获取用户信息
                 const params: LoginParam = {appId, needUserInfo: NeedUserInfoType.ForceNeed}
-                window.location.href = authorizeUrl(params)
+                const url = authorizeUrl(params)
+                if(WxLoginConfig.JumpToAuthrize)
+                    window.location.href = url
             }else{
                 const guestAuthBean: GuestOAuthBean = {appId, openId1: openId, unionId}
 
@@ -175,7 +189,7 @@ export default (props: any) => {
 
     return (
         <Page name="authNotify" onPageInit={pageInit}>
-            {msg && <Block style={pageCenter3}>{msg} <br/>
+            {msg && <Block style={pageCenter}>{msg} <br/>
            </Block>}
         </Page>
     )

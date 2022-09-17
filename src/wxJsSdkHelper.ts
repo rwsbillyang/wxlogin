@@ -249,7 +249,7 @@ function wxConfig(isWxWorkApp: boolean, data: JsSignature, params?: CorpParams, 
         console.log("wxwork config...")
         wx.config({
             beta: true,// 必须这么写，否则wx.invoke调用形式的jsapi会有问题
-            debug: false, // 开启调试模式,调用的所有api的返回值会在客户端alert出来，若要查看传入的参数，可以在pc端打开，参数信息会通过log打出，仅在pc端时才会打印。
+            debug: WxLoginConfig.WxWorkConfigDebug, // 开启调试模式,调用的所有api的返回值会在客户端alert出来，若要查看传入的参数，可以在pc端打开，参数信息会通过log打出，仅在pc端时才会打印。
             appId: data.appId,// 必填，企业微信的corpID
             timestamp: data.timestamp,// 必填，生成签名的时间戳
             nonceStr: data.nonceStr,// 必填，生成签名的随机串
@@ -257,7 +257,7 @@ function wxConfig(isWxWorkApp: boolean, data: JsSignature, params?: CorpParams, 
             jsApiList: jsapiList,// 必填，需要使用的JS接口列表，凡是要调用的接口都需要传进来
             success: function (res: any) {
                 console.log("wxwork wx.config successfully")
-                if (WxLoginConfig.enableAgentConfig) {
+                if (WxLoginConfig.WxWorkConfigEnableAgentConfig) {
                     injectAgentConfig(params, corpId, agentId, jsapiList)
                 }
             },
@@ -271,7 +271,7 @@ function wxConfig(isWxWorkApp: boolean, data: JsSignature, params?: CorpParams, 
     } else if (isWeixinBrowser()) {//微信浏览器中
         console.log("wxoa config...")
         wx.config({
-            debug: false, // 开启调试模式,调用的所有api的返回值会在客户端alert出来，若要查看传入的参数，可以在pc端打开，参数信息会通过log打出，仅在pc端时才会打印。
+            debug: WxLoginConfig.WxConfigDebug, // 开启调试模式,调用的所有api的返回值会在客户端alert出来，若要查看传入的参数，可以在pc端打开，参数信息会通过log打出，仅在pc端时才会打印。
             appId: data.appId,// 必填，企业微信的corpID
             timestamp: data.timestamp,// 必填，生成签名的时间戳
             nonceStr: data.nonceStr,// 必填，生成签名的随机串
@@ -279,7 +279,7 @@ function wxConfig(isWxWorkApp: boolean, data: JsSignature, params?: CorpParams, 
             jsApiList: jsapiList,// 必填，需要使用的JS接口列表，凡是要调用的接口都需要传进来
             success: function (res: any) {
                 console.log("wxoa wx.config successfully")
-                if (WxLoginConfig.enableAgentConfig) {
+                if (WxLoginConfig.WxWorkConfigEnableAgentConfig) {
                     injectAgentConfig(params, corpId, agentId, jsapiList)
                 }
             },
@@ -300,7 +300,7 @@ function injectAgentConfig(params?: CorpParams, corpId?: string, agentId?: numbe
         console.warn("useWxJsSdk: not config UseCacheConfig.request?.get?")
         return 
     }
-    get("/api/wx/work/jssdk/signature", { ...params, "type": "agent_config", url: currentHost + "/" }) //后端签名依赖于Referer，但index.html中禁用了，故明确传递过去
+    get("/api/wx/work/jssdk/signature", { ...params, "type": "agent_config", url: currentHost() + "/" }) //后端签名依赖于Referer，但index.html中禁用了，故明确传递过去
         .then(res => {
             //setStatus(WxJsStatus.SDKInitializing)
             const box: DataBox<JsSignature> = res.data

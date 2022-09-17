@@ -2,7 +2,11 @@
 //depends on f7 Router/Compoent and UI
 export const WxLoginConfig = {
     EnableLog: false,
-    enableAgentConfig: false, //企业微信是否注入agentConfig
+    WxConfigDebug: false, //wx.config调试开关
+    WxWorkConfigDebug: false, //企业微信wx.config调试开关
+    WxWorkConfigEnableAgentConfig: false, //企业微信是否注入agentConfig
+    JumpToAuthrize: true, //跳转到微信认证授权，用于调试
+    backToFromAfterOAuth: true, //oauth之后是否跳回from，用于调试
     hasNavBar: true,
      /**
      * 后端在通知前端oauth认证时采用的前端路径必须与此一致，

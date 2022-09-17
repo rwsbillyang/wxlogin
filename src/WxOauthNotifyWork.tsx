@@ -11,7 +11,7 @@ import { getValue, WxAuthHelper, WxGuestAuthHelper } from './WxOauthHelper';
 import { GuestOAuthBean } from "./datatype/GuestOAuthBean";
 import { AuthBean } from "./datatype/AuthBean";
 import { WxLoginConfig } from "./Config";
-import { pageCenter3 } from "./style";
+import { pageCenter } from "./style";
 
 
 
@@ -80,6 +80,11 @@ const WxOauthNotifyWork: React.FC = (props: any) => {
             //f7.dialog.alert("登录成功，请关闭窗口重新打开")
             return false
         }
+        if(!WxLoginConfig.backToFromAfterOAuth){
+            setMsg("登录成功，因配置不跳回from")
+            console.log("wxWork: WxLoginConfig.backToFromAfterOAuth="+WxLoginConfig.backToFromAfterOAuth)
+            return false
+        }
 
         //登录后，无需再登录自己的系统，如普通的访客对newsDetail的访问
          //检查路径中是否包含需要登录的字符
@@ -135,7 +140,7 @@ const WxOauthNotifyWork: React.FC = (props: any) => {
     }
     return (
         <Page name="workAuthNotify" onPageAfterIn={pageInit}>
-            <Block style={pageCenter3}>{msg}</Block>
+            <Block style={pageCenter}>{msg}</Block>
         </Page>
     )
 }

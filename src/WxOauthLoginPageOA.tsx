@@ -9,7 +9,8 @@ import { LoginParam } from './datatype/LoginParam';
 import { NeedUserInfoType } from './datatype/NeedUserInfoType';
 import { SnsScope } from './datatype/SnsScope';
 import { randomAlphabetNumber } from './random';
-import { pageCenter3 } from './style';
+import { pageCenter } from './style';
+import { WxLoginConfig } from './Config';
 
 
 
@@ -32,7 +33,7 @@ export const authorizeUrl = (params: LoginParam, openId?: string) => {
     const scope = forceNeed ? SnsScope.userInfo : SnsScope.base
 
     //构建callback notify的url
-    let url = `${currentHost}${notifyPath}/${params.appId}/${params.needUserInfo}`
+    let url = `${currentHost()}${notifyPath}/${params.appId}/${params.needUserInfo}`
     if (openId) url += ("/" + openId)
     if (params.owner) url += ("/" + params.owner)
     const redirectUri = encodeURI(url)
@@ -62,13 +63,15 @@ export const WxOauthLoginPageOA: React.FC<LoginParam> = (props: LoginParam) => {
             if (from) saveValue("from", from)
             saveValue("authStorageType", authStorageType?.toString() || StorageType.BothStorage.toString())
 
-            window.location.href = authorizeUrl(props, openId)
+            const url = authorizeUrl(props, openId)
+            if(WxLoginConfig.JumpToAuthrize)
+                window.location.href = url
         }
     }, [])
 
     return (
         <Page name="oalogin" >
-            <Block style={pageCenter3}>{status}</Block>
+            <Block style={pageCenter}>{status}</Block>
         </Page>
     )
 }

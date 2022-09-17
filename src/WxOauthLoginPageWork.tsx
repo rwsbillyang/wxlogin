@@ -9,7 +9,8 @@ import { LoginParam } from "./datatype/LoginParam";
 import { NeedUserInfoType } from "./datatype/NeedUserInfoType";
 import { SnsScope } from "./datatype/SnsScope";
 import { randomAlphabetNumber } from "./random";
-import { pageCenter3 } from "./style";
+import { pageCenter } from "./style";
+import { WxLoginConfig } from "./Config";
 
 
 
@@ -63,8 +64,9 @@ const WxOauthLoginPageWork: React.FC<LoginParam> = (props) => {
                 saveValue("authStorageType", authStorageType?.toString() || StorageType.BothStorage.toString())
           
                 //const corpsParam = WebAppHelper.getCorpParams()
-          
-                window.location.href = authorizeUrlWork(props)
+                const url = authorizeUrlWork(props)
+                if(WxLoginConfig.JumpToAuthrize)
+                    window.location.href = url
             }
             
         }
@@ -77,7 +79,7 @@ const WxOauthLoginPageWork: React.FC<LoginParam> = (props) => {
 
     return (
         <Page name="wxWorkLogin" >
-             <Block style={pageCenter3}>{status}</Block>
+             <Block style={pageCenter}>{status}</Block>
         </Page>
     )
 }
