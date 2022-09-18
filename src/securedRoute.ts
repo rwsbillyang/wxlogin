@@ -6,15 +6,18 @@ import { checkAdmin, NeedWxOauth } from "./checkAdmin";
 
 
 
-
+/**
+ * @parameter 
+ */
 export function securedRoute(
     name: string,
     path: string,
     component: ComponentFunction | Function | object,
-    needWxOauth: NeedWxOauth = NeedWxOauth.Yes) {
-    return {
-      name, path, id: name, async(ctx: Router.RouteCallbackCtx) { checkAdmin(ctx, component, needWxOauth) }
-    }
+    needWxOauth: number = NeedWxOauth.Yes) 
+    {
+      return {
+        name, path, id: name, async(ctx: Router.RouteCallbackCtx) { checkAdmin(ctx, component, needWxOauth) }
+      }
   }
   
   

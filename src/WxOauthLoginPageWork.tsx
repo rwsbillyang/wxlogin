@@ -25,7 +25,7 @@ import { WxLoginConfig } from "./Config";
     const host = currentHost()
     let url = !params.suiteId ? `${host}/api/wx/work/oauth/notify/${params.corpId}/${params.agentId}`
     : `${host}/api/wx/work/isv/oauth/notify/${params.suiteId}`
-    
+    if(params.needUserInfo !== undefined) url += ("&needUserInfo="+params.needUserInfo)
     const redirectUri = encodeURI(url)
     console.log("wxwork: redirectUri="+url+", after encodeURI="+redirectUri)
 

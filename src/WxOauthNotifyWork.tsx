@@ -12,6 +12,7 @@ import { GuestOAuthBean } from "./datatype/GuestOAuthBean";
 import { AuthBean } from "./datatype/AuthBean";
 import { WxLoginConfig } from "./Config";
 import { pageCenter } from "./style";
+import { scanQrcodeIdKey } from "./WxScanQrcodeLogin";
 
 
 
@@ -99,13 +100,15 @@ const WxOauthNotifyWork: React.FC = (props: any) => {
 
         let url = `/api/wx/work/account/login`
         //是否扫码登录，是的话传递给后台，单独处理 WxScanQrcodeLoginConfirmPage中设置scanQrcodeId
-        const scanQrcodeId = getValue("scanQrcodeId")
+        const scanQrcodeId = getValue(scanQrcodeIdKey)
         if (scanQrcodeId) url = url + "?scanQrcodeId=" + scanQrcodeId
     
-        const p = UseCacheConfig.request?.postWithouAuth
+        //执行到此处时，f7尚未ready，还没有给request赋值
+        const p = UseCacheConfig.request?.postWithoutAuth
         if (!p) {
-            console.warn("useWxJsSdk: not config UseCacheConfig.request?.postWithouAuth?")
-            return 
+            console.warn("useWxJsSdk: not config UseCacheConfig.request?.postWithoutAuth?")
+            setMsg("WxOauthNotifyWork: not config postWithoutAuth?")
+            return false
         }
         p(url, initialAuthBean)
             .then(function (res) {
@@ -115,15 +118,23 @@ const WxOauthNotifyWork: React.FC = (props: any) => {
                     if (authBean) {
                         authBean.unionId = unionId
                         WxAuthHelper.onAuthenticated(authBean, authStorageType)
-    
-                        f7.views.main.router.navigate(from)  //window.location.href = from 
+                        if(WxLoginConfig.EnableLog) console.log("successfully login, goto "+ from)
+                        if(WxAuthHelper.hasRoles(roles))
+                        {
+                            props.f7router.navigate(from)
+                            //f7.views.main.router.navigate(from)  //window.location.href = from
+                        }else{
+                            if(WxLoginConfig.EnableLog) console.log("no permission: need "+roles, +", but "+ JSON.stringify(authBean))
+                            setMsg("没有权限，请联系管理员")
+                        } 
                     } else {
                         setMsg("异常：未获取到登录信息")
                     }
                 } else if (box.code == CODE.NewUser) {
                     //window.location.href = "/u/register?from=" + from
                     //使用router.navigate容易导致有的手机中注册页面中checkbox和a标签无法点击,原因不明
-                    f7.views.main.router.navigate("/u/register", { props: { from: from } })
+                    //f7.views.main.router.navigate("/u/register", { props: { from: from } })
+                    props.f7router.navigate("/u/register", { props: { from: from } })
                 } else if (box.code === "SelfAuth") {
                     //成员自己授权使用，引导用户授权应用
                     setMsg("请自行安装应用")

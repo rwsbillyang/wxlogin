@@ -5,7 +5,6 @@ import { f7 } from "framework7-react";
 import { StorageType } from "@rwsbillyang/usecache";
 
 import { WxOauthLoginPageOA } from "./WxOauthLoginPageOA";
-import { PathNeedRoles } from "./datatype/PathNeedRoles";
 import { LoginParam } from "./datatype/LoginParam";
 import { NeedUserInfoType } from "./datatype/NeedUserInfoType";
 import WxOauthLoginPageWork from "./WxOauthLoginPageWork";
@@ -21,24 +20,6 @@ import { ComponentFunction } from "framework7/modules/component/component";
 import { WxLoginConfig } from "./Config";
 
 
-const adminPathConfigs: PathNeedRoles[] = [
-    {
-        characters: "/super/admin/",
-        roles: ["root"]
-    },
-    {
-        characters: "/admin/",
-        roles: ["root", "admin"]
-    },
-    {
-        characters: "/dev/",
-        roles: ["dev"]
-    },
-    {
-        characters: "/user/",
-        roles: ["root", "admin", "user"]
-    },
-]
 
 /**
  * 循环遍历adminPathConfigs配置数组，path匹配则返回需要的roles
@@ -46,6 +27,16 @@ const adminPathConfigs: PathNeedRoles[] = [
  * @returns 返回访问该路径需要的roles数组，用户如若具备roles中任何一个即可访问，无需roles，返回undefined
  */
 export function rolesNeededByPath(toPath: string) {
+    const customAdminPathRoles = WxLoginConfig.customAdminPathRoles
+    if(customAdminPathRoles && customAdminPathRoles.length > 0){
+        for (let i = 0; i < customAdminPathRoles.length; i++) {
+            const e = customAdminPathRoles[i]
+            if (toPath.indexOf(e.characters) >= 0)
+                return e.roles
+        }
+    }
+
+    const adminPathConfigs = WxLoginConfig.adminPathRoles
     for (let i = 0; i < adminPathConfigs.length; i++) {
         const e = adminPathConfigs[i]
         if (toPath.indexOf(e.characters) >= 0)
@@ -56,10 +47,10 @@ export function rolesNeededByPath(toPath: string) {
 /**
  * 仅适用于无需roles特权时的普通路径，是否需微信登录
  */
-export enum NeedWxOauth {
-    Yes, //是
-    OnlyWxEnv, //仅仅微信环境下 
-    No //直接跳走，无需微信登录
+export const NeedWxOauth = {
+    Yes: 2, //是
+    OnlyWxEnv:1, //仅仅微信环境下 
+    No: 0 //直接跳走，无需微信登录
 }
 /**
  * 0.关于securedRoute
@@ -91,10 +82,11 @@ export enum NeedWxOauth {
  * 为Yes时，则检查是否oauth登录信息，没有则进行微信登录，
  * 为OnlyWxEnv时则在微信环境下进行认证登录，
  * 为No一概不进行微信认证登录
+ * 
  */
 export function checkAdmin(ctx: Router.RouteCallbackCtx,
     component: ComponentFunction | Function | object,
-    needWxOauth: NeedWxOauth = NeedWxOauth.Yes
+    needWxOauth: number = NeedWxOauth.Yes
 ) {
     if (WxLoginConfig.EnableLog) console.log("securedRoute checkAdmin call checkAndSetCorpParams")
     const toUrl = ctx.to.url
@@ -102,6 +94,7 @@ export function checkAdmin(ctx: Router.RouteCallbackCtx,
         ctx.resolve({ "component": ErrorPage }, { "props": { msg: "no CorpParams in toUrl=" + toUrl } })
 
     const toPath = ctx.to.path
+
     const isWxWorkApp = WebAppHelper.isWxWorkApp()
 
     //从拦截的链接中获取 从url中提取参数loginType

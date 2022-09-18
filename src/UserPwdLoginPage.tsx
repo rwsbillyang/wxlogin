@@ -22,7 +22,7 @@ const UserPwdLoginPage: React.FC<LoginParam> = (props: LoginParam) => {
     const [password, setPassword] = useState();
     const [loginSuccess, setLoginSuccess] = useState(false);
     
-    const from = props.from // /wx/webAdmin/login?from=/wx/super/admin/home
+    const from = props.from // /wx/webAdmin/login?from=/wx/admin/home
 
     const signIn = () => {
         // f7.dialog.alert(`Username: ${username}<br>Password: ${password}`, () => {
@@ -34,7 +34,7 @@ const UserPwdLoginPage: React.FC<LoginParam> = (props: LoginParam) => {
             f7.dialog.alert("请输入用户名和密码") 
             return
         }
-        const p = UseCacheConfig.request?.postWithouAuth
+        const p = UseCacheConfig.request?.postWithoutAuth
         if (!p) {
             console.warn("UserPwdLoginPage: not config UseCacheConfig.request?.postWithouAuth?")
             return 

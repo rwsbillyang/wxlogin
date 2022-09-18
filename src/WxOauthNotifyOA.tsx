@@ -1,7 +1,7 @@
 import { Block, f7, Page } from 'framework7-react';
 import React, { useState } from 'react';
 
-import {DataBox, StorageType, CODE, getDataFromBox, UseCacheConfig} from "@rwsbillyang/usecache"
+import { DataBox, StorageType, CODE, getDataFromBox, UseCacheConfig } from "@rwsbillyang/usecache"
 
 
 import { getValue, WxGuestAuthHelper } from './WxOauthHelper';
@@ -17,53 +17,53 @@ import { NeedUserInfoType } from './datatype/NeedUserInfoType';
 import { GuestOAuthBean } from './datatype/GuestOAuthBean';
 import { pageCenter } from './style';
 import { WxLoginConfig } from './Config';
-import { WebAppHelper } from './WebAppHelper';
+import { scanQrcodeIdKey } from './WxScanQrcodeLogin';
 
 /**
  * 适用于公众号登录
  * 各种需要登录的地方，需求可能有所区别，提取于此，都用到它
  * 本来不需要每次进入都登录，只不过收到奖励后需要更新，才每次都获取最新值，同时后端可对token进行检查
  */
- export function login(openId: string,  
-    onOK: ()=> void, 
-    onNewUser:() => void,
-    onFail:(msg: string) => void, 
+export function login(openId: string,
+    onOK: (authBean: AuthBean) => void,
+    onNewUser: () => void,
+    onFail: (msg: string) => void,
     authStorageType: number,
-    unionId?: string, 
+    unionId?: string,
     loginType: string = 'wechat'
-){
+) {
     f7.dialog.preloader('登录中...')
-    const p = UseCacheConfig.request?.postWithouAuth
+    const p = UseCacheConfig.request?.postWithoutAuth
     if (!p) {
         console.warn("WxOatuhNotifyOA: not config UseCacheConfig.request?.postWithouAuth?")
-        return 
+        return
     }
     p(`/api/wx/oa/account/login`, { name: openId, pwd: unionId, type: loginType })
-    .then(function (res) {
-        f7.dialog.close()
-        const box: DataBox<AuthBean> = res.data
-        if (box.code == CODE.OK) {
-            const authBean = getDataFromBox(box)
-            if (authBean) {
-                WxAuthHelper.onAuthenticated(authBean, authStorageType)
-                onOK()
+        .then(function (res) {
+            f7.dialog.close()
+            const box: DataBox<AuthBean> = res.data
+            if (box.code == CODE.OK) {
+                const authBean = getDataFromBox(box)
+                if (authBean) {
+                    WxAuthHelper.onAuthenticated(authBean, authStorageType)
+                    onOK(authBean)
+                } else {
+                    console.log(box.msg)
+                    onFail("no data")
+                }
+            } else if (box.code == CODE.NewUser) {
+                onNewUser()
             } else {
                 console.log(box.msg)
-                onFail("no data")
+                onFail(box.msg || "something wrong")
             }
-        } else if (box.code == CODE.NewUser) {
-            onNewUser()
-        } else {
-            console.log(box.msg)
-            onFail(box.msg || "something wrong")
-        }
-    })
-    .catch(function (err) {
-        f7.dialog.close()
-        const msg_ = err.status + ": " + err.message
-        console.log(msg_)
-        onFail(msg_)
-    })
+        })
+        .catch(function (err) {
+            f7.dialog.close()
+            const msg_ = err.status + ": " + err.message
+            console.log(msg_)
+            onFail(msg_)
+        })
 }
 
 
@@ -87,35 +87,43 @@ export default (props: any) => {
             return false
         }
 
-        if(!WxLoginConfig.backToFromAfterOAuth){
+        if (!WxLoginConfig.backToFromAfterOAuth) {
             setMsg("登录成功，因配置不跳回from")
-            console.log("WxLoginConfig.backToFromAfterOAuth="+WxLoginConfig.backToFromAfterOAuth)
+            console.log("WxLoginConfig.backToFromAfterOAuth=" + WxLoginConfig.backToFromAfterOAuth)
             return false
         }
 
         //微信登录后，无需再登录自己的系统，如普通的访客对newsDetail的访问
-         //检查路径中是否包含需要登录的字符
+        //检查路径中是否包含需要登录的字符
         const roles = rolesNeededByPath(from)
-        if(!roles){
+        if (!roles) {
             console.log("navigate non-admin page: " + from)
             props.f7router.navigate(from)
             return false
         }
 
         //是否扫码登录，是的话传递给后台，单独处理 WxScanQrcodeLoginConfirmPage中设置scanQrcodeId
-        const scanQrcodeId = getValue("scanQrcodeId")
-        const unionId = scanQrcodeId? scanQrcodeId : undefined
-        const type = scanQrcodeId? LoginType.SCAN_QRCODE : LoginType.WECHAT
+        const scanQrcodeId = getValue(scanQrcodeIdKey)
+        const unionId = scanQrcodeId ? scanQrcodeId : undefined
+        const type = scanQrcodeId ? LoginType.SCAN_QRCODE : LoginType.WECHAT
 
         //必须是系统注册用户
-        login(openId, 
-            ()=> f7.views.main.router.navigate(from), 
+        login(openId,
+            (authBean) => {
+                if (WxAuthHelper.hasRoles(roles))
+                    props.f7router.navigate(from)
+                    //f7.views.main.router.navigate(from)  //window.location.href = from
+                else {
+                    if (WxLoginConfig.EnableLog) console.log("no permission: need " + roles, +", but " + JSON.stringify(authBean))
+                    setMsg("没有权限，请联系管理员")
+                }
+            },
             //()=> f7.views.main.router.navigate("/u/register", { props: { from } }),
-            ()=>{ window.location.href = "/u/register?from="+from }, //使用router.navigate容易导致有的手机中注册页面中checkbox和a标签无法点击,原因不明
-            (msg)=> setMsg("登录失败：" + msg), storageType, unionId, type
-            )
-            
-            return false
+            () => { window.location.href = "/u/register?from=" + from }, //使用router.navigate容易导致有的手机中注册页面中checkbox和a标签无法点击,原因不明
+            (msg) => setMsg("登录失败：" + msg), storageType, unionId, type
+        )
+
+        return false
     }
 
 
@@ -133,9 +141,9 @@ export default (props: any) => {
             var needEnterStep2: Int? = null // for step1: 1 enter step2, or else ends
             ) 
             */
-        const {step, code, appId, state, openId, msg, unionId, needEnterStep2} = props.f7route.query
- 
-        
+        const { step, code, appId, state, openId, msg, unionId, needEnterStep2 } = props.f7route.query
+
+
         //默认使用BothStorage
         const authStorageType = +(getValue("authStorageType") || StorageType.BothStorage.toString())
 
@@ -160,37 +168,37 @@ export default (props: any) => {
         // console.log("WxOauthNotifyOA.pageInit: WxLoginConfig=" + JSON.stringify(WxLoginConfig))
         // console.log("WxOauthNotifyOA.pageInit: coprParams=" + JSON.stringify(WebAppHelper.getCorpParams()))
 
-        if(step === '1'){
+        if (step === '1') {
             //进行第二步认证：目的在于获取用户信息
             if (needEnterStep2 === '1') {
                 //准备进入step2，表示获取用户信息
-                const params: LoginParam = {appId, needUserInfo: NeedUserInfoType.ForceNeed}
+                const params: LoginParam = { appId, needUserInfo: NeedUserInfoType.ForceNeed }
                 const url = authorizeUrl(params)
-                if(WxLoginConfig.JumpToAuthrize)
+                if (WxLoginConfig.JumpToAuthrize)
                     window.location.href = url
-            }else{
-                const guestAuthBean: GuestOAuthBean = {appId, openId1: openId, unionId}
+            } else {
+                const guestAuthBean: GuestOAuthBean = { appId, openId1: openId, unionId }
 
                 WxGuestAuthHelper.onAuthenticated(guestAuthBean, authStorageType)
 
                 maybeLoginAndGoBack(authStorageType, openId)
             }
-        }else if(step === '2'){
-            const guestAuthBean: GuestOAuthBean = {appId, openId1: openId, unionId, hasUserInfo: true}
+        } else if (step === '2') {
+            const guestAuthBean: GuestOAuthBean = { appId, openId1: openId, unionId, hasUserInfo: true }
             WxGuestAuthHelper.onAuthenticated(guestAuthBean, authStorageType)
-            
+
             maybeLoginAndGoBack(authStorageType, openId)
-        }else{
-            setMsg("parameter error: step="+step)
+        } else {
+            setMsg("parameter error: step=" + step)
         }
-        
+
         return false
     }
 
     return (
         <Page name="authNotify" onPageInit={pageInit}>
-            {msg && <Block style={pageCenter}>{msg} <br/>
-           </Block>}
+            {msg && <Block style={pageCenter}>{msg} <br />
+            </Block>}
         </Page>
     )
 }
