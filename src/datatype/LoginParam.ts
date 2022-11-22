@@ -9,6 +9,6 @@
     agentId?: string //企业微信
     from?: string //需要登录的页面
     owner?: string //用于公众号 用于判断用户设置是否获取用户信息 
-    needUserInfo: number // 用于公众号 或企业微信
-    authStorageType?: number //authBean存储类型
+    needUserInfo: number // 用于公众号 或企业微信, default value: NeedUserInfoType.Force_Not_Need = 0
+    authStorageType?: number //authBean存储类型, default value: StorageType.BothStorage
   }

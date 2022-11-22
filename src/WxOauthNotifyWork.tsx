@@ -2,10 +2,10 @@
 import {DataBox, StorageType, CODE, getDataFromBox, UseCacheConfig} from "@rwsbillyang/usecache"
 
 
-import { Block, f7, Page } from 'framework7-react';
+import { Block, Page } from 'framework7-react';
 import React, { useState } from 'react';
 
-import { rolesNeededByPath } from './checkAdmin';
+
 import { getValue, WxAuthHelper, WxGuestAuthHelper } from './WxOauthHelper';
 
 import { GuestOAuthBean } from "./datatype/GuestOAuthBean";
@@ -13,6 +13,7 @@ import { AuthBean } from "./datatype/AuthBean";
 import { WxLoginConfig } from "./Config";
 import { pageCenter } from "./style";
 import { scanQrcodeIdKey } from "./WxScanQrcodeLogin";
+import { rolesNeededByPath } from "./securedRoute";
 
 
 

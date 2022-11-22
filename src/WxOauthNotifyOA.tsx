@@ -8,7 +8,6 @@ import { getValue, WxGuestAuthHelper } from './WxOauthHelper';
 import { authorizeUrl } from './WxOauthLoginPageOA';
 
 
-import { rolesNeededByPath } from './checkAdmin';
 import { WxAuthHelper } from "./WxOauthHelper";
 import { AuthBean } from './datatype/AuthBean';
 import { LoginType } from './datatype/LoginType';
@@ -18,6 +17,7 @@ import { GuestOAuthBean } from './datatype/GuestOAuthBean';
 import { pageCenter } from './style';
 import { WxLoginConfig } from './Config';
 import { scanQrcodeIdKey } from './WxScanQrcodeLogin';
+import { rolesNeededByPath } from './securedRoute';
 
 /**
  * 适用于公众号登录

@@ -13,9 +13,9 @@ import { LoginParam } from './datatype/LoginParam';
 import { AuthBean } from './datatype/AuthBean';
 import { isWeixinBrowser, isWxWorkBrowser } from './wxJsSdkHelper';
 import { pageCenter, pageCenter3 } from './style';
-import { rolesNeededByPath } from './checkAdmin';
 import { WxLoginConfig } from './Config';
 import { JumpHandly } from './JumpHandly';
+import { rolesNeededByPath } from './securedRoute';
 
 
 export const scanQrcodeIdKey = "ScanQrcodeIdKey"
