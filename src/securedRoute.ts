@@ -15,7 +15,6 @@ import { WebAppHelper } from "./WebAppHelper";
 import { isWeixinOrWxWorkBrowser } from "./wxJsSdkHelper";
 import { CorpParams } from "./datatype/CorpParams";
 import { WxAuthHelper, WxGuestAuthHelper } from "./WxOauthHelper";
-import ErrorPage from "./ErrorPage";
 import { WxLoginConfig } from "./Config";
 
 
@@ -108,8 +107,10 @@ function checkAdmin(ctx: Router.RouteCallbackCtx,
 ) {
   if (WxLoginConfig.EnableLog) console.log("securedRoute checkAdmin call checkAndSetCorpParams")
   const toUrl = ctx.to.url
-  if (!checkAndSetCorpParams(toUrl, ["/super/", "/wx/admin/"]))
-      ctx.resolve({ "component": ErrorPage }, { "props": { msg: "no CorpParams in toUrl=" + toUrl } })
+
+  // make CorpParams optional, not check
+  checkAndSetCorpParams(toUrl, ["/super/", "/wx/admin/"])
+  //ctx.resolve({ "component": ErrorPage }, { "props": { msg: "no CorpParams in toUrl=" + toUrl } })
 
   const toPath = ctx.to.path
 
@@ -201,6 +202,7 @@ function checkAndSetCorpParams(toUrl: string, exceptions?: string[]) {
   //对于exceptions中的例外路径，则设置一个fake CorpParams
   const p = WebAppHelper.getCorpParams()
   if (!p) {
+      console.log("no CorpParams try set it")
       const query: any = f7.utils.parseUrlQuery(toUrl)
       const params: CorpParams = { corpId: query.corpId, agentId: query.agentId, suiteId: query.suiteId, appId: query.appId }
 
@@ -219,7 +221,7 @@ function checkAndSetCorpParams(toUrl: string, exceptions?: string[]) {
               }
           }else{
             if (WxLoginConfig.EnableLog) console.log("no CorpParams in url and sessionStorage:, toUrl=" + toUrl)
-            // make CorpParams optional, not return false
+            return false
           }
       } else {
           WebAppHelper.setCorpParams(params)

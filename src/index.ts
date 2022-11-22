@@ -14,6 +14,7 @@ import { NeedWxOauth, securedRoute } from "./securedRoute"
 import { WebAppHelper } from "./WebAppHelper"
 import { isWeixinBrowser, isWeixinOrWxWorkBrowser, isWxWorkBrowser, useWxJsSdk, WxInitResult, WxJsStatus } from "./wxJsSdkHelper"
 import { WxAuthHelper, WxGuestAuthHelper } from "./WxOauthHelper"
+import { setRelayShareInfo } from "./wxShareHelper"
 // import { LoginParam } from "./datatype/LoginParam"
 // import { PathNeedRoles } from "./datatype/PathNeedRoles"
 // import UserPwdLoginPage from "./UserPwdLoginPage"
@@ -42,6 +43,6 @@ export {
     //SnsScope,
     WxGuestAuthHelper, WxAuthHelper, WebAppHelper,
     isWeixinOrWxWorkBrowser,isWeixinBrowser,isWxWorkBrowser,
-    WxJsStatus, useWxJsSdk,
+    WxJsStatus, useWxJsSdk,setRelayShareInfo,
     randomNumber,randomAlphabet,randomAlphabetNumber
 }
