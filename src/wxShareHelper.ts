@@ -53,7 +53,7 @@ interface ShareInfo {
         }
         updateWxShareInfo(shareInfo)
     } else {
-       if(DEBUG) console.log("ignore setRelayShareInfo, status=" + status)
+       if(WxLoginConfig.EnableLog) console.log("ignore setRelayShareInfo, status=" + status)
     }
 }
 

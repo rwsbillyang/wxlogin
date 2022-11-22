@@ -202,7 +202,7 @@ function checkAndSetCorpParams(toUrl: string, exceptions?: string[]) {
   //对于exceptions中的例外路径，则设置一个fake CorpParams
   const p = WebAppHelper.getCorpParams()
   if (!p) {
-      console.log("no CorpParams try set it")
+      console.log("no CorpParams, check url query params, and try set it")
       const query: any = f7.utils.parseUrlQuery(toUrl)
       const params: CorpParams = { corpId: query.corpId, agentId: query.agentId, suiteId: query.suiteId, appId: query.appId }
 
