@@ -59,7 +59,7 @@ const WxOauthLoginPageWork: React.FC<LoginParam> = (props) => {
             if(corpId && !agentId){
                 setStatus("no agentId, please set it in query parameters")
             }else{
-                console.log("wxWork oauth login from " + from)
+                if(WxLoginConfig.EnableLog) console.log("wxWork oauth login from " + from)
                 if (from) saveValue("from", from)
                 saveValue("authStorageType", authStorageType?.toString() || StorageType.BothStorage.toString())
           

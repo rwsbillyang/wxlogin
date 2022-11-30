@@ -1,21 +1,15 @@
-import React, { useState } from 'react';
 import {
-    f7,
-    Page,
-    LoginScreenTitle,
-    List,
-    ListInput,
-    ListButton,
-    BlockFooter,
+    BlockFooter, f7, List, ListButton, ListInput, LoginScreenTitle, Page
 } from 'framework7-react';
+import React, { useState } from 'react';
 
-import {DataBox, StorageType, CODE, getDataFromBox, UseCacheConfig} from "@rwsbillyang/usecache"
+import { CODE, DataBox, getDataFromBox, StorageType, UseCacheConfig } from "@rwsbillyang/usecache";
 
 
-import { JumpHandly } from './JumpHandly';
+import { SysAccountAuthBean } from './datatype/AuthBean';
 import { LoginParam } from './datatype/LoginParam';
+import { JumpHandly } from './JumpHandly';
 import { WxAuthHelper } from './WxOauthHelper';
-import { AuthBean } from './datatype/AuthBean';
 
 const UserPwdLoginPage: React.FC<LoginParam> = (props: LoginParam) => {
     const [username, setUsername] = useState();
@@ -25,9 +19,6 @@ const UserPwdLoginPage: React.FC<LoginParam> = (props: LoginParam) => {
     const from = props.from // /wx/webAdmin/login?from=/wx/admin/home
 
     const signIn = () => {
-        // f7.dialog.alert(`Username: ${username}<br>Password: ${password}`, () => {
-        //     f7router.back();
-        // });
 
         if(!username || !password)
         {
@@ -43,13 +34,13 @@ const UserPwdLoginPage: React.FC<LoginParam> = (props: LoginParam) => {
         p(`/api/u/login`, {name: username, pwd: password})
         .then(function (res) {
             f7.dialog.close()
-            const box: DataBox<AuthBean> = res.data
+            const box: DataBox<SysAccountAuthBean> = res.data
             if (box.code === CODE.OK) 
             {
-                const authBean = getDataFromBox(box)
-                if(authBean){
+                const bean = getDataFromBox(box)
+                if(bean){
                     const authStorageType = props.authStorageType || StorageType.BothStorage
-                    WxAuthHelper.onAuthenticated(authBean, authStorageType)
+                    WxAuthHelper.saveAuthBean(false, bean, authStorageType)
                     
                     if(from){
                         //f7.toast.show({text:"登录成功，正在跳转..."})

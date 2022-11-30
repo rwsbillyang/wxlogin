@@ -1,19 +1,18 @@
 
-import {DataBox, StorageType, CODE, getDataFromBox, UseCacheConfig} from "@rwsbillyang/usecache"
+import { CODE, DataBox, getDataFromBox, StorageType, UseCacheConfig } from "@rwsbillyang/usecache";
 
 
 import { Block, Page } from 'framework7-react';
 import React, { useState } from 'react';
 
 
-import { getValue, WxAuthHelper, WxGuestAuthHelper } from './WxOauthHelper';
+import { getValue, WxAuthHelper } from './WxOauthHelper';
 
-import { GuestOAuthBean } from "./datatype/GuestOAuthBean";
-import { AuthBean } from "./datatype/AuthBean";
 import { WxLoginConfig } from "./Config";
+import { WxWorkAccountAuthBean, WxWorkGuest } from "./datatype/AuthBean";
+import { rolesNeededByPath } from "./securedRoute";
 import { pageCenter } from "./style";
 import { scanQrcodeIdKey } from "./WxScanQrcodeLogin";
-import { rolesNeededByPath } from "./securedRoute";
 
 
 
@@ -40,7 +39,7 @@ class OAuthResult(
  */
 const WxOauthNotifyWork: React.FC = (props: any) => {
     const [msg, setMsg] = useState<string>("请稍候...")
-    const { code, state, errMsg, unionId, deviceId, openId, userId, externalUserId, corpId, agentId, suiteId } = props.f7route.query
+    const { code, state, errMsg, deviceId, openId, userId, externalUserId, corpId, agentId, suiteId } = props.f7route.query
 
     if (WxLoginConfig.EnableLog) console.log("WxWorkOAuthNotify...")
 
@@ -65,13 +64,13 @@ const WxOauthNotifyWork: React.FC = (props: any) => {
         }
 
         //作为guest，此时已登录成功，此时的agentId可能为空
-        const initialAuthBean: GuestOAuthBean = {
-            corpId, agentId, suiteId, userId, externalUserId, openId2: openId, deviceId
+        const guest: WxWorkGuest = {
+            corpId, agentId, suiteId, userId, externalId:externalUserId, openId, deviceId
         }
 
         //默认使用BothStorage
         const authStorageType = +(getValue("authStorageType") || StorageType.BothStorage.toString())
-        WxGuestAuthHelper.onAuthenticated(initialAuthBean, authStorageType)
+        WxAuthHelper.saveAuthBean(true, {guest}, authStorageType)
 
         const from = getValue("from")
         if (WxLoginConfig.EnableLog) console.log("from=" + from)
@@ -97,7 +96,7 @@ const WxOauthNotifyWork: React.FC = (props: any) => {
             
             return false
         }
-        console.log("WxWorkOAuthNotify： account login ...")
+        if(WxLoginConfig.EnableLog)console.log("WxWorkOAuthNotify： account login ...")
 
         let url = `/api/wx/work/account/login`
         //是否扫码登录，是的话传递给后台，单独处理 WxScanQrcodeLoginConfirmPage中设置scanQrcodeId
@@ -111,14 +110,13 @@ const WxOauthNotifyWork: React.FC = (props: any) => {
             setMsg("WxOauthNotifyWork: not config postWithoutAuth?")
             return false
         }
-        p(url, initialAuthBean)
+        p(url, guest)
             .then(function (res) {
-                const box: DataBox<AuthBean> = res.data
+                const box: DataBox<WxWorkAccountAuthBean> = res.data
                 const authBean = getDataFromBox(box)
                 if (box.code === CODE.OK) {
                     if (authBean) {
-                        authBean.unionId = unionId
-                        WxAuthHelper.onAuthenticated(authBean, authStorageType)
+                        WxAuthHelper.saveAuthBean(false, authBean, authStorageType)
                         if(WxLoginConfig.EnableLog) console.log("successfully login, goto "+ from)
                         if(WxAuthHelper.hasRoles(roles))
                         {

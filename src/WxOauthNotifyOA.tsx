@@ -1,36 +1,33 @@
 import { Block, f7, Page } from 'framework7-react';
 import React, { useState } from 'react';
 
-import { DataBox, StorageType, CODE, getDataFromBox, UseCacheConfig } from "@rwsbillyang/usecache"
+import { CODE, DataBox, getDataFromBox, StorageType, UseCacheConfig } from "@rwsbillyang/usecache";
 
 
-import { getValue, WxGuestAuthHelper } from './WxOauthHelper';
+import { getValue } from './WxOauthHelper';
 import { authorizeUrl } from './WxOauthLoginPageOA';
 
 
-import { WxAuthHelper } from "./WxOauthHelper";
-import { AuthBean } from './datatype/AuthBean';
-import { LoginType } from './datatype/LoginType';
-import { LoginParam } from './datatype/LoginParam';
-import { NeedUserInfoType } from './datatype/NeedUserInfoType';
-import { GuestOAuthBean } from './datatype/GuestOAuthBean';
-import { pageCenter } from './style';
 import { WxLoginConfig } from './Config';
-import { scanQrcodeIdKey } from './WxScanQrcodeLogin';
+import { WxOaAccountAuthBean, WxOaGuest } from './datatype/AuthBean';
+import { LoginParam } from './datatype/LoginParam';
+import { LoginType } from './datatype/LoginType';
+import { NeedUserInfoType } from './datatype/NeedUserInfoType';
 import { rolesNeededByPath } from './securedRoute';
+import { pageCenter } from './style';
+import { WxAuthHelper } from "./WxOauthHelper";
+import { scanQrcodeIdKey } from './WxScanQrcodeLogin';
 
 /**
  * 适用于公众号登录
  * 各种需要登录的地方，需求可能有所区别，提取于此，都用到它
  * 本来不需要每次进入都登录，只不过收到奖励后需要更新，才每次都获取最新值，同时后端可对token进行检查
  */
-export function login(openId: string,
-    onOK: (authBean: AuthBean) => void,
+export function login(guest: WxOaGuest,
+    onOK: (authBean: WxOaAccountAuthBean) => void,
     onNewUser: () => void,
     onFail: (msg: string) => void,
-    authStorageType: number,
-    unionId?: string,
-    loginType: string = 'wechat'
+    authStorageType: number
 ) {
     f7.dialog.preloader('登录中...')
     const p = UseCacheConfig.request?.postWithoutAuth
@@ -38,14 +35,21 @@ export function login(openId: string,
         console.warn("WxOatuhNotifyOA: not config UseCacheConfig.request?.postWithouAuth?")
         return
     }
-    p(`/api/wx/oa/account/login`, { name: openId, pwd: unionId, type: loginType })
+
+    //是否扫码登录，是的话传递给后台，单独处理 WxScanQrcodeLoginConfirmPage中设置scanQrcodeId
+    const scanQrcodeId = getValue(scanQrcodeIdKey)
+    const loginType = scanQrcodeId ? LoginType.SCAN_QRCODE : LoginType.WECHAT
+    let query = `loginType=${loginType}`
+    if(scanQrcodeId) query = query + "&scanQrcodeId="+scanQrcodeId
+        
+    p(`/api/wx/oa/account/login?${query}`, guest)
         .then(function (res) {
             f7.dialog.close()
-            const box: DataBox<AuthBean> = res.data
+            const box: DataBox<WxOaAccountAuthBean> = res.data
             if (box.code == CODE.OK) {
                 const authBean = getDataFromBox(box)
                 if (authBean) {
-                    WxAuthHelper.onAuthenticated(authBean, authStorageType)
+                    WxAuthHelper.saveAuthBean(false,authBean, authStorageType)
                     onOK(authBean)
                 } else {
                     console.log(box.msg)
@@ -76,9 +80,9 @@ export function login(openId: string,
 export default (props: any) => {
     const [msg, setMsg] = useState<string>("请稍候...")
 
-    const maybeLoginAndGoBack = (storageType: number, openId: string) => {
+    const maybeLoginAndGoBack = (storageType: number, guest: WxOaGuest) => {
         const from = getValue("from")
-        console.log("from=" + from)
+        if(WxLoginConfig.EnableLog) console.log("from=" + from)
 
         if (!from) {
             setMsg("登录成功，请关闭后重新打开")
@@ -102,13 +106,9 @@ export default (props: any) => {
             return false
         }
 
-        //是否扫码登录，是的话传递给后台，单独处理 WxScanQrcodeLoginConfirmPage中设置scanQrcodeId
-        const scanQrcodeId = getValue(scanQrcodeIdKey)
-        const unionId = scanQrcodeId ? scanQrcodeId : undefined
-        const type = scanQrcodeId ? LoginType.SCAN_QRCODE : LoginType.WECHAT
-
+        
         //必须是系统注册用户
-        login(openId,
+        login(guest,
             (authBean) => {
                 if (WxAuthHelper.hasRoles(roles))
                     props.f7router.navigate(from)
@@ -120,7 +120,7 @@ export default (props: any) => {
             },
             //()=> f7.views.main.router.navigate("/u/register", { props: { from } }),
             () => { window.location.href = "/u/register?from=" + from }, //使用router.navigate容易导致有的手机中注册页面中checkbox和a标签无法点击,原因不明
-            (msg) => setMsg("登录失败：" + msg), storageType, unionId, type
+            (msg) => setMsg("登录失败：" + msg), storageType
         )
 
         return false
@@ -164,10 +164,6 @@ export default (props: any) => {
             return false
         }
 
-        // console.log("WxOauthNotifyOA.pageInit: UseCacheConfig.EnableLog=" + UseCacheConfig.EnableLog)
-        // console.log("WxOauthNotifyOA.pageInit: WxLoginConfig=" + JSON.stringify(WxLoginConfig))
-        // console.log("WxOauthNotifyOA.pageInit: coprParams=" + JSON.stringify(WebAppHelper.getCorpParams()))
-
         if (step === '1') {
             //进行第二步认证：目的在于获取用户信息
             if (needEnterStep2 === '1') {
@@ -177,17 +173,17 @@ export default (props: any) => {
                 if (WxLoginConfig.JumpToAuthrize)
                     window.location.href = url
             } else {
-                const guestAuthBean: GuestOAuthBean = { appId, openId1: openId, unionId }
+                const guest: WxOaGuest = { appId, openId, unionId }
 
-                WxGuestAuthHelper.onAuthenticated(guestAuthBean, authStorageType)
+                WxAuthHelper.saveAuthBean(true, {guest}, authStorageType)
 
-                maybeLoginAndGoBack(authStorageType, openId)
+                maybeLoginAndGoBack(authStorageType, guest)
             }
         } else if (step === '2') {
-            const guestAuthBean: GuestOAuthBean = { appId, openId1: openId, unionId, hasUserInfo: true }
-            WxGuestAuthHelper.onAuthenticated(guestAuthBean, authStorageType)
+            const guest: WxOaGuest = { appId, openId, unionId }
+            WxAuthHelper.saveAuthBean(true, {guest}, authStorageType)
 
-            maybeLoginAndGoBack(authStorageType, openId)
+            maybeLoginAndGoBack(authStorageType, guest)
         } else {
             setMsg("parameter error: step=" + step)
         }

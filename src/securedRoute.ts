@@ -12,9 +12,9 @@ import UserPwdLoginPage from "./UserPwdLoginPage";
 import { LoginType } from "./datatype/LoginType";
 import { PcShowQrcodePage } from "./WxScanQrcodeLogin";
 import { WebAppHelper } from "./WebAppHelper";
-import { isWeixinOrWxWorkBrowser } from "./wxJsSdkHelper";
+import { isWeixinBrowser, isWeixinOrWxWorkBrowser } from "./wxJsSdkHelper";
 import { CorpParams } from "./datatype/CorpParams";
-import { WxAuthHelper, WxGuestAuthHelper } from "./WxOauthHelper";
+import { WxAuthHelper } from "./WxOauthHelper";
 import { WxLoginConfig } from "./Config";
 
 
@@ -125,8 +125,15 @@ function checkAdmin(ctx: Router.RouteCallbackCtx,
       authStorageType: ctx.to.query.authStorageType ? +(ctx.to.query.authStorageType) : StorageType.BothStorage
   }
 
-  //从拦截的链接中获取 从url中提取参数loginType
-  const loginType = ctx.to.query.loginType
+  //从拦截的链接中获取 从url中提取参数loginType,
+  //没有的话，则根据是否在微信环境，指定默认类型，不再是默认都为微信公众号类型
+  let loginType = ctx.to.query.loginType
+  if(!loginType){
+    if(isWeixinBrowser()) loginType = LoginType.WECHAT
+    else if(isWeixinOrWxWorkBrowser()) loginType = LoginType.WXWORK
+    else loginType = LoginType.ACCOUNT
+  }
+  
 
   let loginComponent: ((props: any) => JSX.Element) | React.FC<LoginParam>
   if (loginType === LoginType.ACCOUNT) {
@@ -143,14 +150,14 @@ function checkAdmin(ctx: Router.RouteCallbackCtx,
 
   //检查路径中是否包含需要登录的字符
   const roles = rolesNeededByPath(toPath)
-  if (roles) {
+  if (roles) {//有特殊权限要求，如admin
       if (WxAuthHelper.hasRoles(roles)) //已登录
           ctx.resolve({ "component": component })
       else {
           if (WxLoginConfig.EnableLog) console.log("securedRoute checkAdmin: need roles=" + roles + ", goto LoginPage from " + ctx.to.url)
           ctx.resolve({ "component": loginComponent }, p)
       }
-  } else {
+  } else {//无需特殊要求
       switch (needWxOauth) {
           case NeedWxOauth.Yes: {
               tryLogin(ctx, component, loginComponent, loginParam)
@@ -182,7 +189,7 @@ function tryLogin(ctx: Router.RouteCallbackCtx,
   loginParam: LoginParam) {
 
   const p = { "props": loginParam }
-  if (WxGuestAuthHelper.isAuthenticated() || WxAuthHelper.isAuthenticated()) {
+  if (WxAuthHelper.isAuthenticated(true) || WxAuthHelper.isAuthenticated(false)) {
       ctx.resolve({ "component": component }, p)
   } else {
       if (WxLoginConfig.EnableLog) console.log("securedRoute: has wxOauth info, jump to=" + ctx.to.url)

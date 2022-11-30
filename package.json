@@ -1,6 +1,6 @@
 {
   "name": "@rwsbillyang/wxlogin",
-  "version": "0.9.11",
+  "version": "0.9.13",
   "description": "wechat(weixin) oauth login for frontend",
   "repository": {
     "type": "git",
@@ -17,16 +17,16 @@
   },
   "homepage": "https://github.com/rwsbillyang/wxlogin#readme",
   "peerDependencies": {
-    "react": "^17.0.0 || ^18.0.0",
-    "react-dom": "^17.0.0 || ^18.0.0",
-    "@rwsbillyang/usecache": "^0.9.5",
     "framework7": "^6.0.0 || ^7.0.0",
     "framework7-icons": "^5.0.0",
     "framework7-react": "^6.0.0 ||^7.0.0",
+    "qrcode.react": "^3.1.0",
+    "react": "^17.0.0 || ^18.0.0",
+    "react-dom": "^17.0.0 || ^18.0.0",
+    "react-use-websocket": "^2.0.0 || ^3.0.0 || ^4.0.0",
     "tslib": "^2.4.0",
     "use-bus": "^2.5.1",
-    "qrcode.react": "^3.1.0",
-    "react-use-websocket": "^2.0.0 || ^3.0.0 || ^4.0.0"
+    "@rwsbillyang/usecache": "^0.9.9"
   },
   "sideEffects": [
     "dist/index.css"
@@ -41,8 +41,8 @@
     "README.md",
     "global.d.ts"
   ],
-  "exports":{
-    ".":{
+  "exports": {
+    ".": {
       "import": "./dist/esm/index.js",
       "require": "./dist/index.js"
     }
@@ -97,6 +97,7 @@
     "core-js": "^3.25.0",
     "cssnano": "^5.1.13",
     "esbuild-plugin-babel": "^0.2.3",
+    "esbuild-wasm": "latest",
     "eslint": "^8.23.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-airbnb-typescript": "^17.0.0",
@@ -123,10 +124,9 @@
     "typescript": "~4.8.3",
     "vite": "3.0.9",
     "vite-plugin-dts": "^1.4.1",
-    "vitest": "^0.23.1",
-    "esbuild-wasm":"latest"
+    "vitest": "^0.23.1"
   },
   "overrides": {
-    "esbuild":"npm:esbuild-wasm@latest"
+    "esbuild": "npm:esbuild-wasm@latest"
   }
 }

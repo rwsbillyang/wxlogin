@@ -4,13 +4,14 @@ import { Block, Page } from 'framework7-react';
 
 import {currentHost, StorageType} from "@rwsbillyang/usecache"
 
-import { saveValue, WxAuthHelper, WxGuestAuthHelper } from './WxOauthHelper';
+import { saveValue, WxAuthHelper } from './WxOauthHelper';
 import { LoginParam } from './datatype/LoginParam';
 import { NeedUserInfoType } from './datatype/NeedUserInfoType';
 import { SnsScope } from './datatype/SnsScope';
 import { randomAlphabetNumber } from './random';
 import { pageCenter } from './style';
 import { WxLoginConfig } from './Config';
+import { WxOaAccountAuthBean } from './datatype/AuthBean';
 
 
 
@@ -56,9 +57,10 @@ export const WxOauthLoginPageOA: React.FC<LoginParam> = (props: LoginParam) => {
         if (!appId) {
             setStatus("no appId, please set appId in query parameters")
         } else {
-            const guestAuthBean = WxGuestAuthHelper.getAuthBean()
-            const authBean = WxAuthHelper.getAuthBean()
-            const openId = guestAuthBean?.openId1 || authBean?.openId1
+            const bean = WxAuthHelper.getAuthBean(true) || WxAuthHelper.getAuthBean(false) 
+            const user = (bean)? bean as WxOaAccountAuthBean : undefined
+
+            const openId = user?.guest?.openId || user?.guest?.openId
 
             if (from) saveValue("from", from)
             saveValue("authStorageType", authStorageType?.toString() || StorageType.BothStorage.toString())

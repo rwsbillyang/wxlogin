@@ -1,9 +1,8 @@
 import { beforeLeave } from "./beforeLeave"
 
 import { WxLoginConfig } from "./Config"
-import { AuthBean } from "./datatype/AuthBean"
+import { AuthBean, Profile,ExpireInfo,WxOaGuest,SysAccountAuthBean,WxOaAccountAuthBean,WxWorkGuest,WxWorkAccountAuthBean } from "./datatype/AuthBean"
 import { CorpParams } from "./datatype/CorpParams"
-import { GuestOAuthBean } from "./datatype/GuestOAuthBean"
 
 import { LoginType } from "./datatype/LoginType"
 import { NeedUserInfoType } from "./datatype/NeedUserInfoType"
@@ -13,21 +12,12 @@ import { wxUserLoginRoutes } from "./routes"
 import { NeedWxOauth, securedRoute } from "./securedRoute"
 import { WebAppHelper } from "./WebAppHelper"
 import { isWeixinBrowser, isWeixinOrWxWorkBrowser, isWxWorkBrowser, useWxJsSdk, WxInitResult, WxJsStatus } from "./wxJsSdkHelper"
-import { WxAuthHelper, WxGuestAuthHelper } from "./WxOauthHelper"
+import { WxAuthHelper } from "./WxOauthHelper"
 import { setRelayShareInfo } from "./wxShareHelper"
-// import { LoginParam } from "./datatype/LoginParam"
-// import { PathNeedRoles } from "./datatype/PathNeedRoles"
-// import UserPwdLoginPage from "./UserPwdLoginPage"
-// import { WxOauthLoginPageOA } from "./WxOauthLoginPageOA"
-// import WxOauthLoginPageWork from "./WxOauthLoginPageWork"
-// import WxOauthNotifyOA from "./WxOauthNotifyOA"
-// import WxOauthNotifyWork from "./WxOauthNotifyWork"
-// import { PcShowQrcodePage, WxScanQrcodeLoginConfirmPage, WxScanQrcodeLoginDonePage } from "./WxScanQrcodeLogin"
 
 
 export type{
-    GuestOAuthBean,  AuthBean, 
-    //PathNeedRoles,LoginParam,  
+     AuthBean, Profile,ExpireInfo,WxOaGuest,SysAccountAuthBean,WxOaAccountAuthBean,WxWorkGuest,WxWorkAccountAuthBean,
     CorpParams, 
     WxInitResult, 
 }
@@ -41,7 +31,7 @@ export {
     wxUserLoginRoutes, securedRoute, beforeLeave,
     LoginType, NeedUserInfoType, NeedWxOauth,
     //SnsScope,
-    WxGuestAuthHelper, WxAuthHelper, WebAppHelper,
+    WxAuthHelper, WebAppHelper,
     isWeixinOrWxWorkBrowser,isWeixinBrowser,isWxWorkBrowser,
     WxJsStatus, useWxJsSdk,setRelayShareInfo,
     randomNumber,randomAlphabet,randomAlphabetNumber

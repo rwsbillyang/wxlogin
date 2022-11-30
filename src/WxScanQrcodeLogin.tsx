@@ -1,21 +1,21 @@
-import React, { useEffect, useState } from 'react';
 import { Block, Button, f7, Page } from 'framework7-react';
+import React, { useEffect, useState } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 
-import {CODE, DataBox, fetchWithLoading, getDataFromBox, StorageType, UseCacheConfig} from "@rwsbillyang/usecache"
+import { CODE, DataBox, fetchWithLoading, getDataFromBox, StorageType, UseCacheConfig } from "@rwsbillyang/usecache";
 
 import QRCode from 'qrcode.react';
 
-import { saveValue, WxAuthHelper, WxGuestAuthHelper } from './WxOauthHelper'
-import { WebAppHelper } from './WebAppHelper';
+import { WxLoginConfig } from './Config';
+import { WxOaAccountAuthBean, WxWorkAccountAuthBean } from './datatype/AuthBean';
 import { CorpParams } from './datatype/CorpParams';
 import { LoginParam } from './datatype/LoginParam';
-import { AuthBean } from './datatype/AuthBean';
-import { isWeixinBrowser, isWxWorkBrowser } from './wxJsSdkHelper';
-import { pageCenter, pageCenter3 } from './style';
-import { WxLoginConfig } from './Config';
 import { JumpHandly } from './JumpHandly';
 import { rolesNeededByPath } from './securedRoute';
+import { pageCenter, pageCenter3 } from './style';
+import { WebAppHelper } from './WebAppHelper';
+import { isWeixinBrowser, isWxWorkBrowser } from './wxJsSdkHelper';
+import { saveValue, WxAuthHelper } from './WxOauthHelper';
 
 
 export const scanQrcodeIdKey = "ScanQrcodeIdKey"
@@ -130,14 +130,14 @@ export const PcShowQrcodePage: React.FC<LoginParam> = (props: any) => {
                 if (WxLoginConfig.EnableLog) console.log("get json authbean from remote: " + text)
   
                 const json = text.substring(5)
-                const box: DataBox<AuthBean> = JSON.parse(json)
+                const box: DataBox<WxWorkAccountAuthBean | WxOaAccountAuthBean> = JSON.parse(json)
                 if (box.code == CODE.OK) {
                     const authBean = getDataFromBox(box)
                     if (authBean) {
                         //默认使用BothStorage
                         const authStorageType = props.authStorageType || StorageType.BothStorage
                         //console.log("PcShowQrcodePage: authStorageType="+authStorageType)
-                        WxAuthHelper.onAuthenticated(authBean, authStorageType)
+                        WxAuthHelper.saveAuthBean(false, authBean, authStorageType)
                       
                         
                         const roles = rolesNeededByPath(from)
@@ -256,8 +256,8 @@ export const WxScanQrcodeLoginConfirmPage: React.FC = (props: any) => {
                             f7.toast.show({text:err})
                         }else{
                             //清除登录缓存，避免因缓存而不进行远程登录
-                            WxAuthHelper.onSignout()
-                            WxGuestAuthHelper.onSignout()
+                            WxAuthHelper.onSignout(false)
+                            WxAuthHelper.onSignout(true)
 
                             saveValue(scanQrcodeIdKey, id) //设置扫码登录标志，导致微信登录时采用不同的登录参数
 
