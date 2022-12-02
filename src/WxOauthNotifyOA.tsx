@@ -147,17 +147,20 @@ export default (props: any) => {
         //默认使用BothStorage
         const authStorageType = +(getValue("authStorageType") || StorageType.BothStorage.toString())
 
+        
+        if (code !== 'OK') {
+            setMsg(msg)
+            console.warn(msg)
+            return false
+        }
+
         const stateInSession = getValue("state")
         if (state !== stateInSession) {
             setMsg("页面已过期")
             console.warn("state=" + state + ", stateInSession=" + stateInSession)
             return false
         }
-        if (code !== 'OK') {
-            setMsg(msg)
-            console.warn(msg)
-            return false
-        }
+        
         if (!openId) {
             setMsg("缺少参数：openId")
             console.warn("缺少参数：openId")

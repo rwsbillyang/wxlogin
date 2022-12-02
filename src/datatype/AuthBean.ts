@@ -1,11 +1,11 @@
 
 export interface AuthBean {
-    loginType: string, //login type
     token: string,
     sysId?: string //system accountId
     roles?: string[], //'user' | 'guest' | 'admin';
-    expireInfo?: ExpireInfo,
+    expire?: ExpireInfo,
     profile?: Profile,
+    gId?: string[], //group id
 }
 
 export interface Profile{
@@ -28,6 +28,7 @@ export interface WxOaGuest{
 
 
 export interface SysAccountAuthBean{
+    _id?: string, //总是为空
     authBean: AuthBean
 }
 

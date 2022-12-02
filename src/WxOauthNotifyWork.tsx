@@ -48,16 +48,19 @@ const WxOauthNotifyWork: React.FC = (props: any) => {
         //f7.dialog.preloader('登录中...')
 
         const stateInSession = getValue("state")
-        if (state !== stateInSession) {
-            setMsg("页面可能已过期，可直接关闭")
-            console.warn("state=" + state + ", stateInSession=" + stateInSession)
-            return false
-        }
+        
         if (code !== 'OK') {
             setMsg(errMsg)
             console.warn(errMsg)
             return false
         }
+        
+        if (state !== stateInSession) {
+            setMsg("页面可能已过期，可直接关闭")
+            console.warn("state=" + state + ", stateInSession=" + stateInSession)
+            return false
+        }
+
         if (!corpId && !suiteId) {
             setMsg("缺少参数：corpId/suiteId")
             return false

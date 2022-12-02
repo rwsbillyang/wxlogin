@@ -4,37 +4,6 @@ import { SysAccountAuthBean, WxOaAccountAuthBean, WxWorkAccountAuthBean } from "
 
 
 
-/**
- * 适用于公众号和企业微信 oauth身份认证
- */
-// export const WxGuestAuthHelper = {
-//     getKey(): string {
-//         return "auth/guest"
-//     },
-//     getAuthBean(): GuestOAuthBean | undefined {
-//         return CacheStorage.getObject(WxGuestAuthHelper.getKey(), StorageType.BothStorage)
-//     },
-//     onAuthenticated(authBean: GuestOAuthBean, storageType: number) {
-//         CacheStorage.saveObject(WxGuestAuthHelper.getKey(), authBean, storageType)
-
-//     },
-//     /**
-//      * 判断是否登录
-//      */
-//     isAuthenticated(): boolean {
-//         const authBean = WxGuestAuthHelper.getAuthBean()
-//         if (authBean)
-//             return true
-//         else
-//             return false
-//     },
-//     onSignout(cb?: () => void) {
-//         Cache.evictCache(WxGuestAuthHelper.getKey(), StorageType.BothStorage)
-//         if (cb) {
-//             cb()
-//         }
-//     },
-// }
 
 export const WxAuthHelper = {
     getKey(isGuest: boolean): string {
@@ -46,27 +15,32 @@ export const WxAuthHelper = {
      * @param userGroup 用户所在分组，若为空则为false
      * @returns 检查用户所具在分组，是否是在资源所需要的分组范围内，有交集为true，否则false
      */
-    // isInGroup(groupNeed?: string[], userGroup?: string[]){
-    //     if(!groupNeed || groupNeed.length === 0) return true //不需要权限
-    //     if(!userGroup || userGroup.length === 0) return false //用户没有权限
-    //     //只要有交集就有权限
-    //     for(let i=0;i<groupNeed.length;i++){
-    //         const gId = groupNeed[i]
-    //         for(let j=0;j<userGroup.length;j++){
-    //             if(userGroup[j] === gId) return true
-    //         }
-    //     }
-    //     return false
-    // },
+    isInGroup(groupNeed?: string[], userGroup?: string[]){
+        if(!groupNeed || groupNeed.length === 0) return true //不需要权限
+        if(!userGroup || userGroup.length === 0) return false //用户没有权限
+        //只要有交集就有权限
+        for(let i=0;i<groupNeed.length;i++){
+            const gId = groupNeed[i]
+            for(let j=0;j<userGroup.length;j++){
+                if(userGroup[j] === gId) return true
+            }
+        }
+        return false
+    },
     /**
      * 判断是否登录
      */
     isAuthenticated(isGuest: boolean): boolean {
         const bean = WxAuthHelper.getAuthBean(isGuest)
-        if (bean && bean.authBean && bean.authBean.token)
+        if(isGuest){
+            return !!bean
+        }else{
+            if (bean && bean.authBean && bean.authBean.token)
             return true
         else
             return false
+        }
+        
     },
     hasRole(role: string) {
         return WxAuthHelper.hasRoles([role])
@@ -103,7 +77,6 @@ export const WxAuthHelper = {
      */
     saveAuthBean(isGuest: boolean, authBean: SysAccountAuthBean | WxOaAccountAuthBean | WxWorkAccountAuthBean, storageType: number) {
         CacheStorage.saveObject(WxAuthHelper.getKey(isGuest), authBean, storageType)
-
     },
     /**
  * 

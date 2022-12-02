@@ -1,6 +1,6 @@
 {
   "name": "@rwsbillyang/wxlogin",
-  "version": "0.9.13",
+  "version": "0.9.15",
   "description": "wechat(weixin) oauth login for frontend",
   "repository": {
     "type": "git",
@@ -26,7 +26,7 @@
     "react-use-websocket": "^2.0.0 || ^3.0.0 || ^4.0.0",
     "tslib": "^2.4.0",
     "use-bus": "^2.5.1",
-    "@rwsbillyang/usecache": "^0.9.9"
+    "@rwsbillyang/usecache": "^0.9.10"
   },
   "sideEffects": [
     "dist/index.css"
