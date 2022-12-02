@@ -66,7 +66,7 @@ interface ShareInfo {
  * @param relayBean 待提交的中继转发信息 shareBean与relayBean只有一个非空
  */
 function updateWxShareInfo(shareInfo: ShareInfo) {
-    if(DEBUG) console.log("updateWxShareInfo, shareInfo=" + JSON.stringify(shareInfo))
+    if(WxLoginConfig.EnableLog) console.log("updateWxShareInfo, shareInfo=" + JSON.stringify(shareInfo))
     // //自定义“分享给朋友”及“分享到QQ”按钮的分享内容（1.4.0）
     //https://www.cnblogs.com/jin-zhe/p/11975240.html
     // wx.updateAppMessageShareData({
