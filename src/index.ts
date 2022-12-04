@@ -13,13 +13,13 @@ import { NeedWxOauth, securedRoute } from "./securedRoute"
 import { WebAppHelper } from "./WebAppHelper"
 import { isWeixinBrowser, isWeixinOrWxWorkBrowser, isWxWorkBrowser, useWxJsSdk, WxInitResult, WxJsStatus } from "./wxJsSdkHelper"
 import { WxAuthHelper } from "./WxOauthHelper"
-import { setRelayShareInfo } from "./wxShareHelper"
+import { setRelayShareInfo, ShareInfo } from "./wxShareHelper"
 
 
 export type{
      AuthBean, Profile,ExpireInfo,WxOaGuest,SysAccountAuthBean,WxOaAccountAuthBean,WxWorkGuest,WxWorkAccountAuthBean,
     CorpParams, 
-    WxInitResult, 
+    WxInitResult, ShareInfo
 }
 
 export {

@@ -1,13 +1,12 @@
 import { currentHost } from "@rwsbillyang/usecache"
 import { WxLoginConfig } from "./Config"
-import { WebAppHelper } from "./WebAppHelper"
 import { WxJsStatus } from "./wxJsSdkHelper"
 
-interface ShareInfo {
-    title?: string,
+export interface ShareInfo {
+    link: string,
+    title: string,
     brief?: string,
-    img?: string,
-    link: string
+    img?: string
 }
 
  //如果index.html中设置  <meta name="referrer" content="no-referrer" />，将导致微信js不能正确注入，故须使用：no-referrer-when-downgrade
@@ -34,24 +33,13 @@ interface ShareInfo {
 /**
  * 设置转发时的自定义分享信息 依赖于wxInit初始化结束、click返回的objectId、article查询完毕
  * 初始化转发自定义分享信息，article为空则直接返回
+ * 
+ * const sep = (WxLoginConfig.BrowserHistorySeparator) ? WxLoginConfig.BrowserHistorySeparator + "/" : ""
+ * const link = `${currentHost()}/${sep}n/d/${mId}${WebAppHelper.getCorpParamsUrlQuery('?')}`
  */
- export function setRelayShareInfo(status: number, mId: string, title: string, brief?: string, img?: string) {
+ export function setRelayShareInfo(status: number, shareInfo: ShareInfo) {
     if (status > WxJsStatus.Ready) {
-
-
-        const sep = (WxLoginConfig.BrowserHistorySeparator) ? WxLoginConfig.BrowserHistorySeparator + "/" : ""
-  
-        const newsPath = "n"
-        const link = `${currentHost()}/${sep}${newsPath}/d/${mId}${WebAppHelper.getCorpParamsUrlQuery('?')}`
-
-
-        const shareInfo: ShareInfo = {
-            title: title,
-            brief: brief,
-            img: addSchema(img),
-            link,
-        }
-        updateWxShareInfo(shareInfo)
+        updateWxShareInfo( { ...shareInfo, img: addSchema(shareInfo.img)})
     } else {
        if(WxLoginConfig.EnableLog) console.log("ignore setRelayShareInfo, status=" + status)
     }

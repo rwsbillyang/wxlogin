@@ -38,11 +38,11 @@ export function login(guest: WxOaGuest,
 
     //是否扫码登录，是的话传递给后台，单独处理 WxScanQrcodeLoginConfirmPage中设置scanQrcodeId
     const scanQrcodeId = getValue(scanQrcodeIdKey)
-    const loginType = scanQrcodeId ? LoginType.SCAN_QRCODE : LoginType.WECHAT
-    let query = `loginType=${loginType}`
-    if(scanQrcodeId) query = query + "&scanQrcodeId="+scanQrcodeId
+    //const loginType = scanQrcodeId ? LoginType.SCAN_QRCODE : LoginType.WECHAT
+    //let query = `loginType=${loginType}`
+    const query = (scanQrcodeId)? ("?scanQrcodeId="+scanQrcodeId) : ''
         
-    p(`/api/wx/oa/account/login?${query}`, guest)
+    p(`/api/wx/oa/account/login${query}`, guest)
         .then(function (res) {
             f7.dialog.close()
             const box: DataBox<WxOaAccountAuthBean> = res.data
