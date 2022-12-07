@@ -1,6 +1,6 @@
 {
   "name": "@rwsbillyang/wxlogin",
-  "version": "0.9.18",
+  "version": "0.9.19",
   "description": "wechat(weixin) oauth login for frontend",
   "repository": {
     "type": "git",
