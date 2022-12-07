@@ -7,11 +7,12 @@ import { CorpParams } from "./datatype/CorpParams"
 import { LoginType } from "./datatype/LoginType"
 import { NeedUserInfoType } from "./datatype/NeedUserInfoType"
 import ErrorPage from "./ErrorPage"
+import { enableVConsole, getQueryString, isVConsoleEnabled, tryLoadWxJs } from "./loadjs"
 import { randomAlphabet, randomAlphabetNumber, randomNumber } from "./random"
 import { wxUserLoginRoutes } from "./routes"
 import { NeedWxOauth, securedRoute } from "./securedRoute"
 import { WebAppHelper } from "./WebAppHelper"
-import { isWeixinBrowser, isWeixinOrWxWorkBrowser, isWxWorkBrowser, useWxJsSdk, WxInitResult, WxJsStatus } from "./wxJsSdkHelper"
+import { isWeixinBrowser, isWeixinOrWxWorkBrowser, isWxWorkBrowser, loadJS, useWxJsSdk, WxInitResult, WxJsStatus } from "./wxJsSdkHelper"
 import { WxAuthHelper } from "./WxOauthHelper"
 import { setRelayShareInfo, ShareInfo } from "./wxShareHelper"
 
@@ -34,5 +35,6 @@ export {
     WxAuthHelper, WebAppHelper,
     isWeixinOrWxWorkBrowser,isWeixinBrowser,isWxWorkBrowser,
     WxJsStatus, useWxJsSdk,setRelayShareInfo,
-    randomNumber,randomAlphabet,randomAlphabetNumber
+    randomNumber,randomAlphabet,randomAlphabetNumber,
+    tryLoadWxJs, isVConsoleEnabled,enableVConsole,getQueryString,loadJS
 }
