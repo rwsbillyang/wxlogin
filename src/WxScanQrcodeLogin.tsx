@@ -140,16 +140,23 @@ export const PcShowQrcodePage: React.FC<LoginParam> = (props: any) => {
                         WxAuthHelper.saveAuthBean(false, authBean, authStorageType)
                       
                         
-                        const roles = rolesNeededByPath(from)
-                        if (roles && WxAuthHelper.hasRoles(roles))
+                        const needRoles = rolesNeededByPath(from)
+                        if (needRoles)
                         {
+                            if(WxAuthHelper.hasRoles(needRoles)){
+                                setLoginSuccess(true)
+                                f7.toast.show({text:"登录成功！", closeTimeout: 5})
+                                props.f7router.navigate(from)
+                                //f7.views.main.router.navigate(from)  //window.location.href = from
+                            }else{
+                                if (WxLoginConfig.EnableLog) console.log(`PcShowQrcodePage no permission: need ${needRoles}, but ${JSON.stringify(authBean)}`)
+                                f7.dialog.alert("没有权限，请联系管理员")
+                            } 
+                        }else {
+                            if (WxLoginConfig.EnableLog) console.log("navigate non-admin page: " + from)
                             setLoginSuccess(true)
                             f7.toast.show({text:"登录成功！", closeTimeout: 5})
-                            props.f7router.navigate(from)
-                            //f7.views.main.router.navigate(from)  //window.location.href = from
-                        }else {
-                            if (WxLoginConfig.EnableLog) console.log("PcShowQrcodePage no permission: need " + roles, +", but " + JSON.stringify(authBean))
-                            f7.dialog.alert("没有权限，请联系管理员")
+                            props.f7router.navigate(from)   
                         }
                     } else {
                         console.log("no data in box: "+box.msg)

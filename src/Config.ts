@@ -50,11 +50,11 @@ export const WxLoginConfig: IWxLoginConfig = {
      */
     adminPathRoles: [
         {
-            characters: "/super/admin/",
+            characters: "/super/admin",
             roles: ["root"]
         },
         {
-            characters: "/admin/",
+            characters: "/admin",
             roles: ["root", "admin"]
         },
         {
