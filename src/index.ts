@@ -7,7 +7,7 @@ import { CorpParams } from "./datatype/CorpParams"
 import { LoginType } from "./datatype/LoginType"
 import { NeedUserInfoType } from "./datatype/NeedUserInfoType"
 import ErrorPage from "./ErrorPage"
-import { enableVConsole, getQueryString, isVConsoleEnabled, tryLoadWxJs } from "./loadjs"
+import { enableVConsole, getQueryParam, getQueryString, isVConsoleEnabled, tryLoadWxJs } from "./loadjs"
 import { randomAlphabet, randomAlphabetNumber, randomNumber } from "./random"
 import { wxUserLoginRoutes } from "./routes"
 import { NeedWxOauth, securedRoute } from "./securedRoute"
@@ -36,5 +36,5 @@ export {
     isWeixinOrWxWorkBrowser,isWeixinBrowser,isWxWorkBrowser,
     WxJsStatus, useWxJsSdk,setRelayShareInfo,
     randomNumber,randomAlphabet,randomAlphabetNumber,
-    tryLoadWxJs, isVConsoleEnabled,enableVConsole,getQueryString,loadJS
+    tryLoadWxJs, isVConsoleEnabled,enableVConsole,getQueryString,getQueryParam,loadJS
 }

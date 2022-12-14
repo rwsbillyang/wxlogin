@@ -27,6 +27,22 @@ export function getQueryString(name: string) {
     };
     return null;
 }
+export function getQueryParam(paramKey: string, url: string | undefined) {
+    if (!url) {
+        url = location.href
+    }
+
+    var index = url.indexOf(paramKey + "=");
+    if (index == -1) {
+        return "";
+    }
+    var getParamStr = url.slice(paramKey.length + index + 1);
+    var nextparam = getParamStr.indexOf("&");
+    if (nextparam != -1) {
+        getParamStr = getParamStr.slice(0, nextparam);
+    }
+    return decodeURIComponent(getParamStr);
+}
 
 export function enableVConsole(enable: boolean){
     localStorage.setItem("vconsole", enable ? "1" : "0")
