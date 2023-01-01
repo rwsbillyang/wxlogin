@@ -123,9 +123,10 @@ export const WxAuthHelper = {
         if (accountId) header["X-Auth-uId"] = accountId //app account Id 
         if(authBean.sysId) header["X-Auth-sysId"] = authBean.sysId//global account Id
 
-        const guest = authBean["guest"]
+        const guest = bean["guest"]
         if (guest) {
-            if (guest.appId) header["X-Auth-appId"] = guest.appId || guest.corpId || guest.suiteId
+            const appId = guest.appId || guest.corpId || guest.suiteId
+            if (appId) header["X-Auth-appId"] = appId
             if (guest.openId) header["X-Auth-openId"] = guest.openId
             if (guest.unionId) header["X-Auth-unionId"] = guest.unionId
             
