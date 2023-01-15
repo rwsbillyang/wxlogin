@@ -27,7 +27,7 @@ export function getQueryString(name: string) {
     };
     return null;
 }
-export function getQueryParam(paramKey: string, url: string | undefined) {
+export function getQueryParam(paramKey: string, url?: string | undefined) {
     if (!url) {
         url = location.href
     }
@@ -52,11 +52,23 @@ export function isVConsoleEnabled(){
 }
 /**
  * 加载微信或企业微信js sdk
- * @params enableVConsoleMode 0 总是不加载vconsole  2：总是加载vconsole 1 取决于localstorage或query参数
+ * @params enableVConsoleMode 0: 总是不加载vconsole, 1 取决于localstorage或query参数, 2：总是加载vconsole 
  */
 export function tryLoadWxJs(enableVConsoleMode: 0 | 1 | 2) {
 
     var protocol = window.location.protocol
+    
+    //vconsole //cdn.bootcdn.net/ajax/libs/vConsole/3.11.2/vconsole.min.js
+    //https://cdn.jsdelivr.net/npm/vconsole@latest/dist/vconsole.min.js
+    if (enableVConsoleMode === 2 || (enableVConsoleMode === 1 && (isVConsoleEnabled() || getQueryParam("vconsole") === '1'))){
+        const url = protocol + "//cdn.jsdelivr.net/npm/vconsole@latest/dist/vconsole.min.js"
+        console.log("try load vconsole@latest js...")
+        loadJS(url, function () { 
+            new VConsole(); 
+            console.log("enable vconsole done!")
+        })
+    }
+    
     if (isWeixinBrowser()) {
         if(WxLoginConfig.EnableLog) console.log("to load: jweixin-1.6.0.js...")
         loadJS(protocol + "//res.wx.qq.com/open/js/jweixin-1.6.0.js")
@@ -68,16 +80,7 @@ export function tryLoadWxJs(enableVConsoleMode: 0 | 1 | 2) {
         if(WxLoginConfig.EnableLog) console.log("tryLoadWxJs: not in wx, ignore")
     }
 
-    //vconsole //cdn.bootcdn.net/ajax/libs/vConsole/3.11.2/vconsole.min.js
-    //https://cdn.jsdelivr.net/npm/vconsole@latest/dist/vconsole.min.js
-    if (enableVConsoleMode === 2 || (enableVConsoleMode === 1 && (isVConsoleEnabled() || getQueryString("vconsole") === '1'))){
-        const url = protocol + "//cdn.jsdelivr.net/npm/vconsole@latest/dist/vconsole.min.js"
-        console.log("try load vconsole@latest js...")
-        loadJS(url, function () { 
-            new VConsole(); 
-            console.log("enable vconsole done!")
-        })
-    }
+
         
 
 }
