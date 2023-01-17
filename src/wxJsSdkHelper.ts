@@ -38,12 +38,7 @@ export function isWxWorkBrowser() {
 
 
 const defaultJsApiList = [
-    'onMenuShareTimeline',
-    'onMenuShareAppMessage',
-    'onMenuShareQQ',
-    'onMenuShareWeibo',
-    'onMenuShareQZone',
-    'onMenuShareWeChat',
+
     // 'startRecord',
     // 'stopRecord',
     // 'onVoiceRecordEnd',
@@ -78,10 +73,17 @@ const defaultJsApiList = [
     //'openCard'
 ]
 const defaultWxOaJsApi = [
+    'onMenuShareTimeline',
+    'onMenuShareAppMessage',
+    'onMenuShareQQ',
+    'onMenuShareWeibo',
+    'onMenuShareQZone',
+    'onMenuShareWeChat',
     'chooseWXPay',
 ]
 const defaultWxWorkJsApi = [
-    "getContext", "getCurExternalContact", "openUserProfile", "selectExternalContact"
+    "getContext", "getCurExternalContact", "openUserProfile", "selectExternalContact",
+    "onMenuShareAppMessage","onMenuShareWechat","onMenuShareTimeline","shareAppMessage","shareWechatMessage"
 ]
 
 /**
@@ -159,7 +161,7 @@ export function useWxJsSdk(stausCallbacks?: object, jsApi?: string[]) {
                 console.warn("useWxJsSdk: not config UseCacheConfig.request?.get?")
                 return false
             }
-            const url = location.href //currentHost() + "/"
+            const url = window.location.href //currentHost() + "/"
             let p: Promise<RequestResponse>
             //企业微信的jsSDK自定义分享不能在微信中正确设置，使用对应的公众号配置
             //因此：在微信中，就使用公众号的配置; 在企业微信中，就使用企业微信的配置
@@ -378,7 +380,7 @@ export function useWxJsSdk(stausCallbacks?: object, jsApi?: string[]) {
             }).catch(err => {
                 const msg = err.message
                 console.warn(msg)
-                //setStatus(WxJsStatus.RequestErr)
+                updateStatus(WxJsStatus.RequestErr)
             })
     }
 
