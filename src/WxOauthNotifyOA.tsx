@@ -1,5 +1,5 @@
-import { Block, f7, Page } from 'framework7-react';
-import React, { useState } from 'react';
+
+import React, { useEffect, useState } from 'react';
 
 import { CODE, DataBox, getDataFromBox, StorageType, UseCacheConfig } from "@rwsbillyang/usecache";
 
@@ -11,12 +11,12 @@ import { authorizeUrl } from './WxOauthLoginPageOA';
 import { WxLoginConfig } from './Config';
 import { WxOaAccountAuthBean, WxOaGuest } from './datatype/AuthBean';
 import { LoginParam } from './datatype/LoginParam';
-import { LoginType } from './datatype/LoginType';
 import { NeedUserInfoType } from './datatype/NeedUserInfoType';
 import { rolesNeededByPath } from './securedRoute';
 import { pageCenter } from './style';
 import { WxAuthHelper } from "./WxOauthHelper";
 import { scanQrcodeIdKey } from './WxScanQrcodeLogin';
+import { gotoUrl, hideLoading, Page, showLoading } from './PortLayer';
 
 /**
  * 适用于公众号登录
@@ -29,7 +29,7 @@ export function login(guest: WxOaGuest,
     onFail: (msg: string) => void,
     authStorageType: number
 ) {
-    f7.dialog.preloader('登录中...')
+    showLoading('登录中...')
     const p = UseCacheConfig.request?.postWithoutAuth
     if (!p) {
         console.warn("WxOatuhNotifyOA: not config UseCacheConfig.request?.postWithouAuth?")
@@ -44,7 +44,7 @@ export function login(guest: WxOaGuest,
         
     p(`/api/wx/oa/account/login${query}`, guest)
         .then(function (res) {
-            f7.dialog.close()
+            hideLoading()
             const box: DataBox<WxOaAccountAuthBean> = res.data
             if (box.code == CODE.OK) {
                 const authBean = getDataFromBox(box)
@@ -63,7 +63,7 @@ export function login(guest: WxOaGuest,
             }
         })
         .catch(function (err) {
-            f7.dialog.close()
+            hideLoading()
             const msg_ = err.status + ": " + err.message
             console.log(msg_)
             onFail(msg_)
@@ -102,7 +102,7 @@ export default (props: any) => {
         const roles = rolesNeededByPath(from)
         if (!roles) {
             console.log("navigate non-admin page: " + from)
-            props.f7router.navigate(from)
+            gotoUrl(from)
             return false
         }
 
@@ -111,14 +111,12 @@ export default (props: any) => {
         login(guest,
             (authBean) => {
                 if (WxAuthHelper.hasRoles(roles))
-                    props.f7router.navigate(from)
-                    //f7.views.main.router.navigate(from)  //window.location.href = from
+                    gotoUrl(from)
                 else {
                     if (WxLoginConfig.EnableLog) console.log("no permission: need " + roles, +", but " + JSON.stringify(authBean))
                     setMsg("没有权限，请联系管理员")
                 }
             },
-            //()=> f7.views.main.router.navigate("/u/register", { props: { from } }),
             () => { window.location.href = "/u/register?from=" + from }, //使用router.navigate容易导致有的手机中注册页面中checkbox和a标签无法点击,原因不明
             (msg) => setMsg("登录失败：" + msg), storageType
         )
@@ -193,11 +191,15 @@ export default (props: any) => {
 
         return false
     }
+    
+    useEffect(() =>{ 
+        pageInit() //对于RoutableTab，无pageInit等page事件
+    }, [])
 
     return (
-        <Page name="authNotify" onPageInit={pageInit}>
-            {msg && <Block style={pageCenter}>{msg} <br />
-            </Block>}
+        <Page>
+            {msg && <div style={pageCenter}>{msg} <br />
+            </div>}
         </Page>
     )
 }

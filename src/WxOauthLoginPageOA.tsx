@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 
-import { Block, Page } from 'framework7-react';
 
 import { currentHost, StorageType } from "@rwsbillyang/usecache";
 
@@ -8,9 +7,11 @@ import { WxLoginConfig } from './Config';
 import { LoginParam } from './datatype/LoginParam';
 import { NeedUserInfoType } from './datatype/NeedUserInfoType';
 import { SnsScope } from './datatype/SnsScope';
-import { randomAlphabetNumber } from './random';
+import { randomAlphabetNumber } from './utils';
 import { pageCenter } from './style';
 import { saveValue } from './WxOauthHelper';
+import { Page } from './PortLayer';
+import { WebAppLoginHelper } from './WebAppLoginHelper';
 
 
 
@@ -35,10 +36,10 @@ export const authorizeUrl = (params: LoginParam) => {
     //构建callback notify的url,后端notify url如下：
     // $notifyPath1/{appId}/{needUserInfo}/{owner?}
     //"$notifyPath2/{appId}"
-    let url = `${currentHost()}${notifyPath}/${params.appId}`
+    let url = `${currentHost()}${notifyPath}/${params?.appId}`
     if(!forceNeed){//notify1
-        url += ("/" + params.needUserInfo)
-        if (params.owner) url += ("/" + params.owner)
+        url += ("/" + params?.needUserInfo)
+        if (params?.owner) url += ("/" + params.owner)
     }
     
     const redirectUri = encodeURI(url)
@@ -46,37 +47,37 @@ export const authorizeUrl = (params: LoginParam) => {
 
     const state = randomAlphabetNumber(12)
     saveValue("state", state)
-    return `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${params.appId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&state=${state}#wechat_redirect`
+    return `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${params?.appId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&state=${state}#wechat_redirect`
 }
 
 
-export const WxOauthLoginPageOA: React.FC<LoginParam> = (props: LoginParam) => {
+export const WxOauthLoginPageOA: React.FC = (props) => {
     const [status, setStatus] = useState<string>("请稍候...")
-
-    const { appId, from, authStorageType } = props
+    const loginParam = WebAppLoginHelper.getLoginParams()
+   // const { appId, from, authStorageType } = loginParam
 
 
     //在RoutableTabs中，故onPageInit不被trigger，故使用useEffect
     useEffect(() => {
-        if (!appId) {
+        if (!loginParam?.appId) {
             setStatus("no appId, please set appId in query parameters")
         } else {
             //const bean = WxAuthHelper.getAuthBean(true) || WxAuthHelper.getAuthBean(false) 
             //const user = (bean)? bean as WxOaAccountAuthBean : undefined
             //const openId = user?.guest?.openId || user?.guest?.openId
 
-            if (from) saveValue("from", from)
-            saveValue("authStorageType", authStorageType?.toString() || StorageType.BothStorage.toString())
+            if (loginParam?.from) saveValue("from", loginParam.from)
+            saveValue("authStorageType", loginParam?.authStorageType?.toString() || StorageType.BothStorage.toString())
 
-            const url = authorizeUrl(props)
+            const url = authorizeUrl(loginParam)
             if(WxLoginConfig.JumpToAuthrize)
                 window.location.href = url
         }
     }, [])
 
     return (
-        <Page name="oalogin" >
-            <Block style={pageCenter}>{status}</Block>
+        <Page>
+            <div style={pageCenter}>{status}</div>
         </Page>
     )
 }

@@ -1,4 +1,5 @@
 import { WxLoginConfig } from "./Config";
+import { getQueryString } from "./utils";
 import { isWeixinBrowser, isWxWorkBrowser } from "./wxJsSdkHelper";
 
 /**
@@ -14,34 +15,6 @@ export function loadJS(url: string, callback?: ()=>void) {
     };
     script.src = url;
     document.getElementsByTagName('head')[0].appendChild(script);
-}
-
-/**
- * bug: 当query参数在 #! 分隔的路径后面时无法解析处理
- */
-export function getQueryString(name: string) {
-    let reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
-    let r = window.location.search.substr(1).match(reg);
-    if (r != null) {
-        return decodeURIComponent(r[2]);
-    };
-    return null;
-}
-export function getQueryParam(paramKey: string, url?: string | undefined) {
-    if (!url) {
-        url = location.href
-    }
-
-    var index = url.indexOf(paramKey + "=");
-    if (index == -1) {
-        return "";
-    }
-    var getParamStr = url.slice(paramKey.length + index + 1);
-    var nextparam = getParamStr.indexOf("&");
-    if (nextparam != -1) {
-        getParamStr = getParamStr.slice(0, nextparam);
-    }
-    return decodeURIComponent(getParamStr);
 }
 
 export function enableVConsole(enable: boolean){
@@ -60,7 +33,7 @@ export function tryLoadWxJs(enableVConsoleMode: 0 | 1 | 2) {
     
     //vconsole //cdn.bootcdn.net/ajax/libs/vConsole/3.11.2/vconsole.min.js
     //https://cdn.jsdelivr.net/npm/vconsole@latest/dist/vconsole.min.js
-    if (enableVConsoleMode === 2 || (enableVConsoleMode === 1 && (isVConsoleEnabled() || getQueryParam("vconsole") === '1'))){
+    if (enableVConsoleMode === 2 || (enableVConsoleMode === 1 && (isVConsoleEnabled() || getQueryString("vconsole") === '1'))){
         const url = protocol + "//cdn.jsdelivr.net/npm/vconsole@latest/dist/vconsole.min.js"
         console.log("try load vconsole@latest js...")
         loadJS(url, function () { 

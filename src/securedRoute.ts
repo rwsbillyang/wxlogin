@@ -1,6 +1,3 @@
-import { ComponentFunction } from "framework7/modules/component/component";
-import { Router } from "framework7/types";
-import { f7 } from "framework7-react";
 
 import { StorageType } from "@rwsbillyang/usecache";
 
@@ -8,14 +5,17 @@ import { WxOauthLoginPageOA } from "./WxOauthLoginPageOA";
 import { LoginParam } from "./datatype/LoginParam";
 import { NeedUserInfoType } from "./datatype/NeedUserInfoType";
 import WxOauthLoginPageWork from "./WxOauthLoginPageWork";
-import UserPwdLoginPage from "./UserPwdLoginPage";
+import {UserPwdLoginPage} from "./UserPwdLoginPage";
 import { LoginType } from "./datatype/LoginType";
 import { PcShowQrcodePage } from "./WxScanQrcodeLogin";
-import { WebAppHelper } from "./WebAppHelper";
+
 import { isWeixinBrowser, isWeixinOrWxWorkBrowser } from "./wxJsSdkHelper";
-import { CorpParams } from "./datatype/CorpParams";
+
 import { WxAuthHelper } from "./WxOauthHelper";
 import { WxLoginConfig } from "./Config";
+import { RouteTypeI, useRouter } from "react-router-manage";
+import { WebAppLoginHelper } from "./WebAppLoginHelper";
+import { parseUrlQuery } from "./utils";
 
 
 /**
@@ -27,23 +27,121 @@ import { WxLoginConfig } from "./Config";
   No: 0 //直接跳走，无需微信登录
 }
 
+
+
+  //copy from lib
+type NextOptionsType = { name?: string; path?: string;} | React.ComponentType<any>;
+
 /**
- * @parameter 
+ * 用于全局路由配置
+ * 
+ * 参考类型RouteTypeI：https://github.com/NSFI/react-router-manage/blob/main/README.zh-CN.md
+ * 
+ * 其中code：表示每个路由需要的权限，若无配置，将使用WxLoginConfig.customAdminPathRoles、WxLoginConfig.adminPathRoles中配置的权限
+ * 可以忽略code属性，定义全局的WxLoginConfig.customAdminPathRoles、WxLoginConfig.adminPathRoles
+ * 
+ * meta属性：如在route中添加meta字段： meta: { needWxOauth: NeedWxOauth.OnlyWxEnv},
  */
-export function securedRoute(
-    name: string,
-    path: string,
-    component: ComponentFunction | Function | object,
-    needWxOauth: number = NeedWxOauth.Yes) 
-    {
-      return {
-        name, path, id: name, async(ctx: Router.RouteCallbackCtx) { 
-          checkAdmin(ctx, component, needWxOauth) 
+export const beforeEnter = (to: RouteTypeI | undefined, next: (nextOptionsType?: NextOptionsType) => void) => {
+    let hasAuth = false
+    let rolesNeeded: string[] | undefined
+    if(to?.code){//检查是否需要权限，优先使用code配置
+        const t = typeof to.code
+        if(t === "function"){
+            const f = to.code as (route: RouteTypeI) => boolean;
+            hasAuth = f(to) //如果路由配置code为函数，且执行结果为true，则有权限
+        }else if (t === "object"){ //array
+            rolesNeeded = to.code as string[]
+        }else if( t === "string"){
+            rolesNeeded = [to.code as string]
         }
-      }
+    }else{//没有配置code，使用WxLoginConfig的配置，即path中是否有admin等字符
+        rolesNeeded = rolesNeededByPath(to?.path  || window.location.href)
+    }
+
+    if(hasAuth){//code为函数，返回结果为true表示有权限
+        next()
+    }else{
+        const  {loginComponent, loginParam} = getLoginComponent()
+        checkAndSetLoginParams(loginParam, to?.path || window.location.href, ["/super/", "/wx/admin/"])
+
+        if(rolesNeeded && rolesNeeded.length > 0){//需要的权限
+            if (WxAuthHelper.hasRoles(rolesNeeded)) //已登录
+            {
+                next()
+            }else{
+                next(loginComponent)
+            }
+        }else{//无需权限，即无code配置，path也无admin字符，但配置了拦截（全局或局部），则检查meta.needWxOauth
+            //无需特殊要求
+            switch (to?.meta?.needWxOauth) {
+                case NeedWxOauth.Yes: {
+                    tryLogin(next,  loginComponent)
+                    break
+                }
+                case NeedWxOauth.OnlyWxEnv: {
+                    if (isWeixinOrWxWorkBrowser()) {
+                        tryLogin(next, loginComponent)
+                    } else {
+                        if (WxLoginConfig.EnableLog) console.log("securedRoute: not wx env, jump directly")
+                        next()
+                    }
+
+                    break
+                }
+                //不需要admin，直接跳走，无需微信登录
+                case NeedWxOauth.No: {
+                    next()
+                    break
+                }
+                default://若配置为全局拦截，则进入此处；若配置为局部，则不拦截；
+                {
+                    next()
+                    break
+                }
+            }
+        }
+    }
   }
-  
-  
+
+  function getLoginComponent(){
+    const { params } = useRouter();
+    const query = parseUrlQuery()
+
+    const loginParam: LoginParam = {
+        appId: query["appId"],
+        corpId: query["corpId"],
+        suiteId: query["suiteId"],
+        agentId: query["agentId"],
+        from: window.location.href,
+        owner: params["uId"] as string | undefined,//用于查询后端文章属主需不需要获取用户信息 //只有newsDetail待定（根据用户配置确定），其它都不需要获取用户信息（关注时自动获取，其它情况不必要）
+        needUserInfo: +(query["needUseInfo"] || NeedUserInfoType.Force_Not_Need), //从拦截的链接中获取 从url中提取参数needUserInfo
+        authStorageType: +(query["authStorageType"] || StorageType.BothStorage)
+    }
+
+    //从拦截的链接中获取 从url中提取参数loginType,
+    //没有的话，则根据是否在微信环境，指定默认类型，不再是默认都为微信公众号类型
+    let loginType = query["loginType"]
+    if(!loginType){
+    if(isWeixinBrowser()) loginType = LoginType.WECHAT
+    else if(isWeixinOrWxWorkBrowser()) loginType = LoginType.WXWORK
+    else loginType = LoginType.ACCOUNT
+    }
+
+
+    let loginComponent: ((props: any) => JSX.Element) | React.FC<LoginParam>
+    if (loginType === LoginType.ACCOUNT) {
+        loginComponent = UserPwdLoginPage
+    } else if (loginType === LoginType.SCAN_QRCODE) {
+        loginComponent = PcShowQrcodePage
+    } else if (loginType === LoginType.MOBILE) {
+        loginComponent = UserPwdLoginPage //暂时也使用账户密码登录
+    } else {
+        loginComponent = WebAppLoginHelper.isWxWorkApp() ? WxOauthLoginPageWork : WxOauthLoginPageOA
+    }
+
+    return {loginComponent, loginParam}
+  }
 
 /**
 * 循环遍历adminPathConfigs配置数组，path匹配则返回需要的roles
@@ -66,8 +164,75 @@ export function rolesNeededByPath(toPath: string) {
       if (toPath.indexOf(e.characters) >= 0)
           return e.roles
   }
-  return
+  return undefined
 }
+
+
+function tryLogin(next: (nextOptionsType?: NextOptionsType) => void,
+  loginComponent: React.LazyExoticComponent<any> | React.FC<any>) {
+
+  if (WxAuthHelper.isAuthenticated(true) || WxAuthHelper.isAuthenticated(false)) {
+    next() 
+  } else {
+      if (WxLoginConfig.EnableLog) console.log("securedRoute: no wxOauth info, to wxAuth...")
+      next(loginComponent) 
+  }
+}
+
+
+/**
+* 检查提取路径中的corpId，agentId等信息，用于构建cache key的前缀(space)，避免数据窜乱
+* 可以通过exceptions设置例外不检查的路径，如“/wx/admin”，此时将这只一个默认的参数
+* 若未设置，将提示出错
+*/
+function checkAndSetLoginParams(loginParam: LoginParam, path: string, exceptions?: string[]) {
+  if (WxLoginConfig.EnableLog) console.log("checkAndSetLoginParams " )
+
+  const p = WebAppLoginHelper.getLoginParams()
+  if (!p) {
+      console.log("no loginParam, check url query params, and try set it")
+      if ((!loginParam.corpId || !loginParam.agentId) && !loginParam.suiteId && !loginParam.appId) {
+          if (exceptions && exceptions.length > 0) {
+              for (let i = 0; i < exceptions.length; i++) {
+                  const e = exceptions[i]
+                  if (WxLoginConfig.EnableLog) console.log("get exception: " + e)
+                  if (path.indexOf(e) >= 0) {
+                      loginParam.appId="app"
+                      if (WxLoginConfig.EnableLog) console.log("set fake appId done")
+                      WebAppLoginHelper.setLoginParams(loginParam)//设置一个fake appId
+                      return true
+                  }
+              }
+          }else{
+            if (WxLoginConfig.EnableLog) console.log("no LoginParams in url and sessionStorage: to="+path)
+            return false
+          }
+      } else {
+        WebAppLoginHelper.setLoginParams(loginParam)
+          if (WxLoginConfig.EnableLog) console.log("setLoginParams done")
+      }
+  }
+  return true
+}
+
+
+  /**
+ * @parameter 
+ */
+// export function securedRoute(
+//     name: string,
+//     path: string,
+//     component: React.LazyExoticComponent<any> | React.FC<any>,
+//     needWxOauth: number = NeedWxOauth.Yes) 
+//     {
+//       return {
+//         name, path, id: name, async(ctx: Router.RouteCallbackCtx) { 
+//           checkAdmin(ctx, component, needWxOauth) 
+//         }
+//       }
+//   }
+
+
 
 /**
 * 0.关于securedRoute
@@ -101,221 +266,84 @@ export function rolesNeededByPath(toPath: string) {
 * 为No一概不进行微信认证登录
 * 
 */
-function checkAdmin(ctx: Router.RouteCallbackCtx,
-  component: ComponentFunction | Function | object,
-  needWxOauth: number = NeedWxOauth.Yes
-) {
-  if (WxLoginConfig.EnableLog) console.log("securedRoute checkAdmin call checkAndSetCorpParams")
-  const toUrl = ctx.to.url
+// function checkAdmin(ctxx: Router.RouteCallbackCtx,
+//   component: React.LazyExoticComponent<any> | React.FC<any>,
+//   needWxOauth: number = NeedWxOauth.Yes
+// ) {
+//   if (WxLoginConfig.EnableLog) console.log("securedRoute checkAdmin call checkAndSetCorpParams")
+//   const toUrl = ctx.to.url
 
-  // make CorpParams optional, not check
-  checkAndSetCorpParams(toUrl, ["/super/", "/wx/admin/"])
-  //ctx.resolve({ "component": ErrorPage }, { "props": { msg: "no CorpParams in toUrl=" + toUrl } })
+//   // make CorpParams optional, not check
+//   checkAndSetCorpParams(toUrl, ["/super/", "/wx/admin/"])
+//   //ctx.resolve({ "component": ErrorPage }, { "props": { msg: "no CorpParams in toUrl=" + toUrl } })
 
-  const toPath = ctx.to.path
+//   const toPath = ctx.to.path
 
-  const loginParam: LoginParam = {
-      appId: ctx.to.query.appId,
-      corpId: ctx.to.query.corpId,
-      suiteId: ctx.to.query.suiteId,
-      agentId: ctx.to.query.agentId,
-      from: toUrl,
-      owner: ctx.to.params["uId"],//用于查询后端文章属主需不需要获取用户信息 //只有newsDetail待定（根据用户配置确定），其它都不需要获取用户信息（关注时自动获取，其它情况不必要）
-      needUserInfo: +(ctx.to.query.needUseInfo || NeedUserInfoType.Force_Not_Need), //从拦截的链接中获取 从url中提取参数needUserInfo
-      authStorageType: ctx.to.query.authStorageType ? +(ctx.to.query.authStorageType) : StorageType.BothStorage
-  }
+//   const loginParam: LoginParam = {
+//       appId: ctx.to.query.appId,
+//       corpId: ctx.to.query.corpId,
+//       suiteId: ctx.to.query.suiteId,
+//       agentId: ctx.to.query.agentId,
+//       from: toUrl,
+//       owner: ctx.to.params["uId"],//用于查询后端文章属主需不需要获取用户信息 //只有newsDetail待定（根据用户配置确定），其它都不需要获取用户信息（关注时自动获取，其它情况不必要）
+//       needUserInfo: +(ctx.to.query.needUseInfo || NeedUserInfoType.Force_Not_Need), //从拦截的链接中获取 从url中提取参数needUserInfo
+//       authStorageType: ctx.to.query.authStorageType ? +(ctx.to.query.authStorageType) : StorageType.BothStorage
+//   }
 
-  //从拦截的链接中获取 从url中提取参数loginType,
-  //没有的话，则根据是否在微信环境，指定默认类型，不再是默认都为微信公众号类型
-  let loginType = ctx.to.query.loginType
-  if(!loginType){
-    if(isWeixinBrowser()) loginType = LoginType.WECHAT
-    else if(isWeixinOrWxWorkBrowser()) loginType = LoginType.WXWORK
-    else loginType = LoginType.ACCOUNT
-  }
+//   //从拦截的链接中获取 从url中提取参数loginType,
+//   //没有的话，则根据是否在微信环境，指定默认类型，不再是默认都为微信公众号类型
+//   let loginType = ctx.to.query.loginType
+//   if(!loginType){
+//     if(isWeixinBrowser()) loginType = LoginType.WECHAT
+//     else if(isWeixinOrWxWorkBrowser()) loginType = LoginType.WXWORK
+//     else loginType = LoginType.ACCOUNT
+//   }
   
 
-  let loginComponent: ((props: any) => JSX.Element) | React.FC<LoginParam>
-  if (loginType === LoginType.ACCOUNT) {
-      loginComponent = UserPwdLoginPage
-  } else if (loginType === LoginType.SCAN_QRCODE) {
-      loginComponent = PcShowQrcodePage
-  } else if (loginType === LoginType.MOBILE) {
-      loginComponent = UserPwdLoginPage //暂时也使用账户密码登录
-  } else {
-      loginComponent = WebAppHelper.isWxWorkApp() ? WxOauthLoginPageWork : WxOauthLoginPageOA
-  }
+//   let loginComponent: ((props: any) => JSX.Element) | React.FC<LoginParam>
+//   if (loginType === LoginType.ACCOUNT) {
+//       loginComponent = UserPwdLoginPage
+//   } else if (loginType === LoginType.SCAN_QRCODE) {
+//       loginComponent = PcShowQrcodePage
+//   } else if (loginType === LoginType.MOBILE) {
+//       loginComponent = UserPwdLoginPage //暂时也使用账户密码登录
+//   } else {
+//       loginComponent = WebAppHelper.isWxWorkApp() ? WxOauthLoginPageWork : WxOauthLoginPageOA
+//   }
 
-  const p = { "props": loginParam }
+//   const p = { "props": loginParam }
 
-  //检查路径中是否包含需要登录的字符
-  const roles = rolesNeededByPath(toPath)
-  if (roles) {//有特殊权限要求，如admin
-      if (WxAuthHelper.hasRoles(roles)) //已登录
-          ctx.resolve({ "component": component })
-      else {
-          if (WxLoginConfig.EnableLog) console.log("securedRoute checkAdmin: need roles=" + roles + ", goto LoginPage from " + ctx.to.url)
-          ctx.resolve({ "component": loginComponent }, p)
-      }
-  } else {//无需特殊要求
-      switch (needWxOauth) {
-          case NeedWxOauth.Yes: {
-              tryLogin(ctx, component, loginComponent, loginParam)
-              break
-          }
-          case NeedWxOauth.OnlyWxEnv: {
-              if (isWeixinOrWxWorkBrowser()) {
-                  tryLogin(ctx, component, loginComponent, loginParam)
-              } else {
-                  if (WxLoginConfig.EnableLog) console.log("securedRoute: not wx env, jump to=" + ctx.to.url)
-                  ctx.resolve({ "component": component }, p)
-              }
+//   //检查路径中是否包含需要登录的字符
+//   const roles = rolesNeededByPath(toPath)
+//   if (roles) {//有特殊权限要求，如admin
+//       if (WxAuthHelper.hasRoles(roles)) //已登录
+//           ctx.resolve({ "component": component })
+//       else {
+//           if (WxLoginConfig.EnableLog) console.log("securedRoute checkAdmin: need roles=" + roles + ", goto LoginPage from " + ctx.to.url)
+//           ctx.resolve({ "component": loginComponent }, p)
+//       }
+//   } else {//无需特殊要求
+//       switch (needWxOauth) {
+//           case NeedWxOauth.Yes: {
+//               tryLogin(ctx, component, loginComponent, loginParam)
+//               break
+//           }
+//           case NeedWxOauth.OnlyWxEnv: {
+//               if (isWeixinOrWxWorkBrowser()) {
+//                   tryLogin(ctx, component, loginComponent, loginParam)
+//               } else {
+//                   if (WxLoginConfig.EnableLog) console.log("securedRoute: not wx env, jump to=" + ctx.to.url)
+//                   ctx.resolve({ "component": component }, p)
+//               }
 
-              break
-          }
-          //不需要admin，直接跳走，无需微信登录
-          case NeedWxOauth.No: {
-              ctx.resolve({ "component": component }, p)
-              break
-          }
-      }
+//               break
+//           }
+//           //不需要admin，直接跳走，无需微信登录
+//           case NeedWxOauth.No: {
+//               ctx.resolve({ "component": component }, p)
+//               break
+//           }
+//       }
 
-  }
-}
-
-function tryLogin(ctx: Router.RouteCallbackCtx,
-  component: ComponentFunction | Function | object,
-  loginComponent: ComponentFunction | Function | object,
-  loginParam: LoginParam) {
-
-  const p = { "props": loginParam }
-  if (WxAuthHelper.isAuthenticated(true) || WxAuthHelper.isAuthenticated(false)) {
-      ctx.resolve({ "component": component }, p)
-  } else {
-      if (WxLoginConfig.EnableLog) console.log("securedRoute: has wxOauth info, jump to=" + ctx.to.url)
-      ctx.resolve({ "component": loginComponent }, p)
-  }
-}
-
-
-/**
-* 检查提取路径中的corpId，agentId等信息，用于构建cache key的前缀，避免数据窜乱
-* 可以通过exceptions设置例外不检查的路径，如“/wx/admin”，此时将这只一个默认的参数
-* 若未设置，将提示出错
-*/
-function checkAndSetCorpParams(toUrl: string, exceptions?: string[]) {
-  if (WxLoginConfig.EnableLog) console.log("checkAndSetCorpParams call getCorpParams! toUrl=" + toUrl)
-  //若还没有CorpParams，则解析url参数，设置它；若已存在则忽略
-  //对于exceptions中的例外路径，则设置一个fake CorpParams
-  const p = WebAppHelper.getCorpParams()
-  if (!p) {
-      console.log("no CorpParams, check url query params, and try set it")
-      const query: any = f7.utils.parseUrlQuery(toUrl)
-      const params: CorpParams = { corpId: query.corpId, agentId: query.agentId, suiteId: query.suiteId, appId: query.appId }
-
-      if ((!query.corpId || !query.agentId) && !query.suiteId && !query.appId) {
-          //wx admin not need SetCorpParams
-          if (exceptions && exceptions.length > 0) {
-              for (let i = 0; i < exceptions.length; i++) {
-                  const e = exceptions[i]
-                  if (WxLoginConfig.EnableLog) console.log("get exception: " + e)
-                  if (toUrl.indexOf(e) >= 0) {
-                      const fakeParams: CorpParams = { appId: "wxAdmin" }
-                      if (WxLoginConfig.EnableLog) console.log("set fake CorpParams done")
-                      WebAppHelper.setCorpParams(fakeParams)//设置一个fake CorpParams
-                      return true
-                  }
-              }
-          }else{
-            if (WxLoginConfig.EnableLog) console.log("no CorpParams in url and sessionStorage:, toUrl=" + toUrl)
-            return false
-          }
-      } else {
-          WebAppHelper.setCorpParams(params)
-          if (WxLoginConfig.EnableLog) console.log("setCorpParams done")
-      }
-  }
-  return true
-}
-
-  
-  //https://forum.framework7.io/t/issue-with-f7-vue-routes-component-async-at-same-time-doesnt-works/4469/8
-  // export function securedRoute2(name: string, path: string, component: ComponentFunction | Function | object) {
-  //   return {
-  //     name, path, id: name,
-  //     async(ctx: Router.RouteCallbackCtx) {
-  
-  //       checkAndSetCorpParams(ctx, ctx.to.url)
-  
-  //       const isNeedAdmin = ctx.to.path.indexOf("/admin/") >= 0
-  //       if (isNeedAdmin) {
-  //         const isLogined = WxAuthHelper.isAuthenticated()
-  //         if (isLogined) {
-  //           //console.log("securedRoute: admin logined, jump to " + ctx.to.url)
-  //           ctx.resolve({ "component": component })
-  //         } else {
-  //           //console.log("securedRoute: not logined, jump to WxOAuthLoginPage from " + ctx.to.url)
-  //           ctx.resolve({
-  //             "component": WxOauthLoginPageWork
-  //           }, {
-  //             "props": { from: ctx.to.url }
-  //           })
-  //         }
-  //       } else {
-  //         if (WxGuestAuthHelper.isAuthenticated()) {
-  //           //console.log("securedRoute: guest logined, jump to " + ctx.to.url)
-  //           ctx.resolve({ "component": component })
-  //         } else {
-  //           //console.log("securedRoute: guest not login, from " + ctx.to.url)
-  //           ctx.resolve({ "component": WxOauthLoginPageWork }, { "props": { from: ctx.to.url } })
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
-  
-  
-  
-  //deprecated
-  // export function needAdmin(ctx: Router.RouteCallbackCtx) {
-  //   if (DEBUG) console.log("beforeEnter needAdmin")
-  
-  //   checkAndSetCorpParams(ctx, ["/wx/admin/"])
-  
-  //   if (ctx.to.path.indexOf("/wx/admin/") >= 0) { //wx管理后台单独处理
-  //     const bean = WxAuthHelper.getAuthBean()
-  //     if (bean?.uId && bean.token && (WxAuthHelper.hasRoles(bean, "admin") || WxAuthHelper.hasRoles(bean, "root")))
-  //       ctx.resolve()
-  //     else {
-  //       ctx.reject()
-  //         //admin情况下，没有指定owner，也没指定openId，WxOauthLoginPageOA直接跳转到获取用户信息的授权认证
-  //         ctx.router.navigate({ name:  'webAdminLogin'  }, { props: { from: ctx.to.url } });
-  //     }
-  //   } else {
-  //     //若还没有CorpParams，则解析url参数，设置它；若已存在则忽略
-  
-  //     const isWxWorkApp = WebAppHelper.isWxWorkApp()
-  //     const isNeedAdmin = ctx.to.path.indexOf("/admin/") >= 0
-  //     if (isNeedAdmin) {
-  //       const isAuthenticated = WxAuthHelper.isAuthenticated()
-  //       if (isAuthenticated) {
-  //         ctx.resolve()
-  //       } else {
-  //         ctx.reject()
-  //         //admin情况下，没有指定owner，也没指定openId，WxOauthLoginPageOA直接跳转到获取用户信息的授权认证
-  //         ctx.router.navigate({ name: isWxWorkApp ? 'login' : 'login2' }, { props: { from: ctx.to.url } });
-  //       }
-  //     } else {
-  //       if (WxGuestAuthHelper.isAuthenticated() || WxAuthHelper.isAuthenticated()) {
-  //         ctx.resolve()
-  //       } else {
-  //         if (DEBUG) console.log("beforeEnter needAdmin: not login, jump to=" + ctx.to.url)
-  //         let owner = ctx.to.params["uId"]//用于查询后端文章属主需不需要获取用户信息
-  
-  //         ctx.reject()
-  //         //非admin页面：只有newsDetail待定（传递了ownerOpenId和未定的needUserInfo，WxOauthLoginPageOA将请求后端根据用户配置确定），其它都不需要获取用户信息（关注时自动获取，其它情况不必要）
-  //         ctx.router.navigate({ name: isWxWorkApp ? 'login' : 'wxoaLogin' }, { props: { from: ctx.to.url, needUserInfo: ctx.to.name.indexOf("newsDetail") >= 0 ? undefined : false, owner: owner } });
-  //       }
-  //     }
-  //   }
-  // }
+//   }
+// }

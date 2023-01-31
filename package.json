@@ -1,7 +1,7 @@
 {
   "name": "@rwsbillyang/wxlogin",
-  "version": "0.9.27",
-  "description": "wechat(weixin) oauth login for frontend",
+  "version": "0.10.0",
+  "description": "wechat(weixin) oauth login for frontend based on react-router-dom",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rwsbillyang/wxlogin.git"
@@ -17,16 +17,13 @@
   },
   "homepage": "https://github.com/rwsbillyang/wxlogin#readme",
   "peerDependencies": {
-    "framework7": "^6.0.0 || ^7.0.0",
-    "framework7-icons": "^5.0.0",
-    "framework7-react": "^6.0.0 ||^7.0.0",
+    "@rwsbillyang/usecache": "^0.9.11",
     "qrcode.react": "^3.1.0",
     "react": "^17.0.0 || ^18.0.0",
     "react-dom": "^17.0.0 || ^18.0.0",
     "react-use-websocket": "^2.0.0 || ^3.0.0 || ^4.0.0",
     "tslib": "^2.4.0",
-    "use-bus": "^2.5.1",
-    "@rwsbillyang/usecache": "^0.9.10"
+    "use-bus": "^2.5.1"
   },
   "sideEffects": [
     "dist/index.css"
@@ -128,5 +125,10 @@
   },
   "overrides": {
     "esbuild": "npm:esbuild-wasm@latest"
+  },
+  "dependencies": {
+    "react-router-dom": "^6.8.0",
+    "react-router-manage": "^2.0.0",
+    "weui": "^1.1.3"
   }
 }

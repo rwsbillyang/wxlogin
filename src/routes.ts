@@ -1,16 +1,15 @@
-
-import { Router } from 'framework7/types';
+import { RouteTypeI } from 'react-router-manage';
 import ErrorPage from './ErrorPage';
-import { securedRoute } from './securedRoute';
-import UserPwdLoginPage from './UserPwdLoginPage';
+import { beforeEnter, NeedWxOauth } from './securedRoute';
+import {UserPwdLoginPage} from './UserPwdLoginPage';
 import { WxOauthLoginPageOA } from './WxOauthLoginPageOA';
 import WxOauthLoginPageWork from './WxOauthLoginPageWork';
 import WxOauthNotifyOA from './WxOauthNotifyOA';
 import WxOauthNotifyWork from './WxOauthNotifyWork';
 import { WxScanQrcodeLoginDonePage, WxScanQrcodeLoginConfirmPage, PcShowQrcodePage } from './WxScanQrcodeLogin';
 
-
-export const wxUserLoginRoutes: Router.RouteParameters[] = [
+//https://github.com/NSFI/react-router-manage/blob/main/README.zh-CN.md
+export const wxUserLoginRoutes: RouteTypeI[] = [
   {
     name: 'showQrcode',
     path: '/wx/scanLogin/show',
@@ -21,57 +20,39 @@ export const wxUserLoginRoutes: Router.RouteParameters[] = [
     path: '/wx/scanLogin/confirm',
     component: WxScanQrcodeLoginConfirmPage
   },
-  securedRoute('scanQrcodeLoginDone', '/wx/scanLogin/user/done', WxScanQrcodeLoginDonePage),
+  {
+    name: 'scanQrcodeLoginDone', 
+    path: '/wx/scanLogin/user/done', 
+    component: WxScanQrcodeLoginDonePage,
+    beforeEnter: beforeEnter,
+    code: ["user"], //优先使用code
+    meta:{ "needWxOauth": NeedWxOauth.Yes }
+  },
   
   {
     name: 'webAdminLogin',
     path: '/wx/webAdmin/login',
     component: UserPwdLoginPage,
-    options: {
-      history: false,
-      browserHistory: false,
-      clearPreviousHistory: true
-    }
   },
   {
     name: 'login',
     path: '/wx/login',
     component: WxOauthLoginPageWork,
-    options: {
-      history: false,
-      browserHistory: false,
-      clearPreviousHistory: true
-    }
   },
   {
     name: 'wxoaLogin',
     path: '/wxoa/login',
     component: WxOauthLoginPageOA,
-    options: {
-      history: false,
-      browserHistory: false,
-      clearPreviousHistory: true
-    }
   },
   {
     name: "wxworkAuthNotify",
     path: '/wxwork/authNotify', //前端若是SPA，通知路径可能需要添加browserHistorySeparator
     component: WxOauthNotifyWork,
-    options: {
-      history: false,
-      browserHistory: false,
-      clearPreviousHistory: true
-    }
   },
   {
     name: "wxoaAuthNotify",
     path: '/wxoa/authNotify', //前端若是SPA，通知路径可能需要添加browserHistorySeparator
     component: WxOauthNotifyOA,
-    options: {
-      history: false,
-      browserHistory: false,
-      clearPreviousHistory: true
-    }
   },
   {
     name: 'error',
@@ -79,4 +60,3 @@ export const wxUserLoginRoutes: Router.RouteParameters[] = [
     component: ErrorPage, //若引用了错误的component，将导致构建route失败，从而影响路由，从而打不开页面
   },
 ]
-

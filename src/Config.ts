@@ -14,7 +14,6 @@ interface IWxLoginConfig {
     */
     BrowserHistorySeparator: string;
     AppKeyPrefix: string;
-    TextBack: string;
     /**
      * SecuredRoute根据该配置是否需要登录, 会被自定义的permitRoles覆盖
      * path中包含characters即命中
@@ -43,7 +42,6 @@ export const WxLoginConfig: IWxLoginConfig = {
     */
     BrowserHistorySeparator: "#!",
     AppKeyPrefix: "/wx",
-    TextBack: "返回",
 
     /**
      * SecuredRoute根据该配置是否需要登录, 会被自定义的permitRoles覆盖

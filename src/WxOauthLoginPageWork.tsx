@@ -1,16 +1,17 @@
 
 import {currentHost, StorageType} from "@rwsbillyang/usecache"
 
-import { Block, Page } from 'framework7-react';
 import React, { useEffect, useState } from 'react';
 
 import { saveValue } from './WxOauthHelper';
 import { LoginParam } from "./datatype/LoginParam";
 import { NeedUserInfoType } from "./datatype/NeedUserInfoType";
 import { SnsScope } from "./datatype/SnsScope";
-import { randomAlphabetNumber } from "./random";
+import { randomAlphabetNumber } from "./utils";
 import { pageCenter } from "./style";
 import { WxLoginConfig } from "./Config";
+import { Page } from "./PortLayer";
+import { WebAppLoginHelper } from "./WebAppLoginHelper";
 
 
 
@@ -47,24 +48,25 @@ import { WxLoginConfig } from "./Config";
  * 
  * 下一步将执行到wxOAuthNotifyxx.tsx
  */
-const WxOauthLoginPageWork: React.FC<LoginParam> = (props) => {
+const WxOauthLoginPageWork: React.FC = (props) => {
     const [status, setStatus] = useState<string>("请稍候...")
-    const {corpId, suiteId, agentId, from, authStorageType} = props
+    const loginParam = WebAppLoginHelper.getLoginParams()
+    //const {corpId, suiteId, agentId, from, authStorageType} = loginParam
 
     //对于RoutableTab，无pageInit等page事件
     const pageInit = () => {
-        if(!corpId && !suiteId){
+        if(!loginParam?.corpId && !loginParam?.suiteId){
             setStatus("no corpId/suiteId, please set them in query parameters")
         }else{
-            if(corpId && !agentId){
+            if(loginParam?.corpId && !loginParam?.agentId){
                 setStatus("no agentId, please set it in query parameters")
             }else{
-                if(WxLoginConfig.EnableLog) console.log("wxWork oauth login from " + from)
-                if (from) saveValue("from", from)
-                saveValue("authStorageType", authStorageType?.toString() || StorageType.BothStorage.toString())
+                if(WxLoginConfig.EnableLog) console.log("wxWork oauth login from " + loginParam?.from)
+                if (loginParam?.from) saveValue("from", loginParam?.from)
+                saveValue("authStorageType", loginParam?.authStorageType?.toString() || StorageType.BothStorage.toString())
           
                 //const corpsParam = WebAppHelper.getCorpParams()
-                const url = authorizeUrlWork(props)
+                const url = authorizeUrlWork(loginParam)
                 if(WxLoginConfig.JumpToAuthrize)
                     window.location.href = url
             }
@@ -78,8 +80,8 @@ const WxOauthLoginPageWork: React.FC<LoginParam> = (props) => {
     }, [])
 
     return (
-        <Page name="wxWorkLogin" >
-             <Block style={pageCenter}>{status}</Block>
+        <Page>
+             <div style={pageCenter}>{status}</div>
         </Page>
     )
 }

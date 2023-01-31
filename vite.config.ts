@@ -20,12 +20,13 @@ export default defineConfig({
     },
     sourcemap: false,
     rollupOptions: {
+      treeshake: true,
       external: [
         'react',
         'react-dom',
-        "framework7",
-        "framework7-icons",
-        "framework7-react",
+        "react-router-dom",
+        "eact-router-manage",
+        "weui",
         "@rwsbillyang/usecache",
         "tslib",
         "use-bus",

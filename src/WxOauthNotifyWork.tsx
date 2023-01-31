@@ -1,9 +1,7 @@
 
 import { CODE, DataBox, getDataFromBox, StorageType, UseCacheConfig } from "@rwsbillyang/usecache";
 
-
-import { Block, Page } from 'framework7-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 
 import { getValue, WxAuthHelper } from './WxOauthHelper';
@@ -13,6 +11,7 @@ import { WxWorkAccountAuthBean, WxWorkGuest } from "./datatype/AuthBean";
 import { rolesNeededByPath } from "./securedRoute";
 import { pageCenter } from "./style";
 import { scanQrcodeIdKey } from "./WxScanQrcodeLogin";
+import { gotoUrl, Page } from "./PortLayer";
 
 
 
@@ -95,7 +94,7 @@ const WxOauthNotifyWork: React.FC = (props: any) => {
         const roles = rolesNeededByPath(from)
         if(!roles){
             if (WxLoginConfig.EnableLog) console.log("navigate non-admin page: " + from)
-            props.f7router.navigate(from)
+            gotoUrl(from)
             
             return false
         }
@@ -123,8 +122,7 @@ const WxOauthNotifyWork: React.FC = (props: any) => {
                         if(WxLoginConfig.EnableLog) console.log("successfully login, goto "+ from)
                         if(WxAuthHelper.hasRoles(roles))
                         {
-                            props.f7router.navigate(from)
-                            //f7.views.main.router.navigate(from)  //window.location.href = from
+                            gotoUrl(from)
                         }else{
                             if(WxLoginConfig.EnableLog) console.log("no permission: need "+roles, +", but "+ JSON.stringify(authBean))
                             setMsg("没有权限，请联系管理员")
@@ -136,12 +134,11 @@ const WxOauthNotifyWork: React.FC = (props: any) => {
                     //window.location.href = "/u/register?from=" + from
                     //使用router.navigate容易导致有的手机中注册页面中checkbox和a标签无法点击,原因不明
                     //f7.views.main.router.navigate("/u/register", { props: { from: from } })
-                    props.f7router.navigate("/u/register", { props: { from: from } })
+                    gotoUrl("/u/register?from="+from)
                 } else if (box.code === "SelfAuth") {
                     //成员自己授权使用，引导用户授权应用
                     setMsg("请自行安装应用")
-                    //f7.views.main.router.navigate(from)
-                    //props.f7router.navigate(from)  //window.location.href = from 
+                   //window.location.href = from 
                 } else {
                     setMsg("登录失败，请联系管理员：" + box.msg)
                 }
@@ -151,9 +148,14 @@ const WxOauthNotifyWork: React.FC = (props: any) => {
             })
         return false
     }
+
+    useEffect(() =>{ 
+        pageInit() //对于RoutableTab，无pageInit等page事件
+    }, [])
+    
     return (
-        <Page name="workAuthNotify" onPageAfterIn={pageInit}>
-            <Block style={pageCenter}>{msg}</Block>
+        <Page>
+            <div style={pageCenter}>{msg}</div>
         </Page>
     )
 }

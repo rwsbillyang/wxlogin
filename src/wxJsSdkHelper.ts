@@ -2,11 +2,10 @@ import { useEffect, useState } from 'react'
 
 import { CODE, DataBox, getDataFromBox, CacheStorage, currentHost, UseCacheConfig } from "@rwsbillyang/usecache"
 
-import { f7 } from 'framework7-react';
-import { RequestResponse } from 'framework7/types';
-import { WebAppHelper } from './WebAppHelper';
-import { CorpParams } from './datatype/CorpParams';
+
 import { WxLoginConfig } from './Config';
+import { WebAppLoginHelper } from './WebAppLoginHelper';
+import { LoginParam } from './datatype/LoginParam';
 
 
 
@@ -122,13 +121,13 @@ export interface WxInitResult {
  * @param jsApi 
  */
 export function useWxJsSdk(stausCallbacks?: object, jsApi?: string[]) {
-    const [status, setStatus] = useState(f7.data.wxJsStatus || WxJsStatus.None)
+    const [status, setStatus] = useState(+(CacheStorage.getItem("wxJsStatus") || WxJsStatus.None))
     const [networkType, setNetworkType] = useState<string | undefined>(CacheStorage.getItem(WxJsNtKey))
-    const isWxWorkApp = WebAppHelper.isWxWorkApp()
+    const isWxWorkApp = WebAppLoginHelper.isWxWorkApp()
     const jsApiList = jsApi ? jsApi : defaultJsApiList.concat(isWxWorkApp ? defaultWxWorkJsApi : defaultWxOaJsApi)
 
     const updateStatus = (newStatus: number) => {
-        f7.data.wxJsStatus = newStatus
+        CacheStorage.saveItem("wxJsStatus", newStatus.toString())
         if (stausCallbacks) {
             const cb = stausCallbacks[newStatus.toString()]
             if (cb) cb()
@@ -147,8 +146,8 @@ export function useWxJsSdk(stausCallbacks?: object, jsApi?: string[]) {
 
     const getSignautre = () => {
         //避免重复请求
-        if (f7.data.wxJsStatus == undefined || f7.data.wxJsStatus <= WxJsStatus.None) { //若还处在初始状态，就进行签名验证，否则不验证。避免中途再次调用getSignautre
-            const params = WebAppHelper.getCorpParams()
+        if (status <= WxJsStatus.None) { //若还处在初始状态，就进行签名验证，否则不验证。避免中途再次调用getSignautre
+            const params = WebAppLoginHelper.getLoginParams()
             const appId = params?.appId
             const corpId = params?.corpId
             const agentId = params?.agentId
@@ -162,7 +161,7 @@ export function useWxJsSdk(stausCallbacks?: object, jsApi?: string[]) {
                 return false
             }
             const url = window.location.href //currentHost() + "/"
-            let p: Promise<RequestResponse>
+            let p: Promise<any>
             //企业微信的jsSDK自定义分享不能在微信中正确设置，使用对应的公众号配置
             //因此：在微信中，就使用公众号的配置; 在企业微信中，就使用企业微信的配置
             if (isWxWorkApp && isWxWorkBrowser()) {//企业微信浏览器中
@@ -188,7 +187,7 @@ export function useWxJsSdk(stausCallbacks?: object, jsApi?: string[]) {
                     const data = getDataFromBox(box)
                     if (data) {
                        console.log("get JsSignature return data done!")
-                        wxConfig(isWxWorkApp, data, params, corpId, agentId)
+                        wxConfig(isWxWorkApp, data, params, corpId, agentId? +agentId: undefined )
                        
                         wx.ready(()=> {
                             console.log("wx.ready!!!")
@@ -242,7 +241,7 @@ export function useWxJsSdk(stausCallbacks?: object, jsApi?: string[]) {
     }
 
     //JS-SDK:  https://open.work.weixin.qq.com/api/doc/10029  
-    function wxConfig(isWxWorkApp: boolean, data: JsSignature, params?: CorpParams, corpId?: string, agentId?: number) {
+    function wxConfig(isWxWorkApp: boolean, data: JsSignature, params?: LoginParam, corpId?: string, agentId?: number) {
         wx.checkJsApi({
             jsApiList: jsApiList, // 需要检测的JS接口列表
             success: function (res) {
@@ -287,7 +286,7 @@ export function useWxJsSdk(stausCallbacks?: object, jsApi?: string[]) {
             }
         });
     }
-    function wxWorkConfig(data: JsSignature, params?: CorpParams, corpId?: string, agentId?: number) {
+    function wxWorkConfig(data: JsSignature, params?: LoginParam, corpId?: string, agentId?: number) {
         console.log("wxwork config...")
         wx.config({
             beta: true,// 必须这么写，否则wx.invoke调用形式的jsapi会有问题
@@ -325,7 +324,7 @@ export function useWxJsSdk(stausCallbacks?: object, jsApi?: string[]) {
     }
 
 
-    function injectAgentConfig(jsapiList: string[], params?: CorpParams, corpId?: string, agentId?: number) {
+    function injectAgentConfig(jsapiList: string[], params?: LoginParam, corpId?: string, agentId?: number) {
         console.log("injectAgentConfig...")
         const get = UseCacheConfig.request?.get
         if (!get) {
