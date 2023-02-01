@@ -1,4 +1,4 @@
-import { currentHost } from "@rwsbillyang/usecache"
+import { currentHref } from "@rwsbillyang/usecache"
 import { WxLoginConfig } from "./Config"
 import { WxJsStatus } from "./wxJsSdkHelper"
 
@@ -27,7 +27,7 @@ export interface ShareInfo {
     if(!url || url.indexOf("http") === 0) return url
     if(url.indexOf("//") === 0)return window.location.protocol + url
     
-    return currentHost()+url
+    return currentHref()+url
 }
 
 /**

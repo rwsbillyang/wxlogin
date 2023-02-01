@@ -1,5 +1,5 @@
 
-import { CODE, DataBox, getDataFromBox, StorageType, UseCacheConfig } from "@rwsbillyang/usecache";
+import { cachedFetch, CODE, FetchParams, StorageType, UseCacheConfig } from "@rwsbillyang/usecache";
 
 import React, { useEffect, useState } from 'react';
 
@@ -8,10 +8,11 @@ import { getValue, WxAuthHelper } from './WxOauthHelper';
 
 import { WxLoginConfig } from "./Config";
 import { WxWorkAccountAuthBean, WxWorkGuest } from "./datatype/AuthBean";
+import { gotoUrl, Page } from "./PortLayer";
 import { rolesNeededByPath } from "./securedRoute";
 import { pageCenter } from "./style";
 import { scanQrcodeIdKey } from "./WxScanQrcodeLogin";
-import { gotoUrl, Page } from "./PortLayer";
+import { parseUrlQuery } from "./utils";
 
 
 
@@ -38,12 +39,13 @@ class OAuthResult(
  */
 const WxOauthNotifyWork: React.FC = (props: any) => {
     const [msg, setMsg] = useState<string>("请稍候...")
-    const { code, state, errMsg, deviceId, openId, userId, externalUserId, corpId, agentId, suiteId } = props.f7route.query
+    const query: any = parseUrlQuery() || {}
+    const { code, state, errMsg, deviceId, openId, userId, externalUserId, corpId, agentId, suiteId } = query
 
     if (WxLoginConfig.EnableLog) console.log("WxWorkOAuthNotify...")
 
     const pageInit = () => {
-        if (WxLoginConfig.EnableLog) console.log("WxWorkOAuthNotify pageInit... url=" + props.f7route.url)
+        if (WxLoginConfig.EnableLog) console.log("WxWorkOAuthNotify pageInit... url=" + window.location.href)
         //f7.dialog.preloader('登录中...')
 
         const stateInSession = getValue("state")
@@ -105,47 +107,50 @@ const WxOauthNotifyWork: React.FC = (props: any) => {
         const scanQrcodeId = getValue(scanQrcodeIdKey)
         if (scanQrcodeId) url = url + "?scanQrcodeId=" + scanQrcodeId
     
-        //执行到此处时，f7尚未ready，还没有给request赋值
-        const p = UseCacheConfig.request?.postWithoutAuth
-        if (!p) {
-            console.warn("useWxJsSdk: not config UseCacheConfig.request?.postWithoutAuth?")
-            setMsg("WxOauthNotifyWork: not config postWithoutAuth?")
-            return false
-        }
-        p(url, guest)
-            .then(function (res) {
-                const box: DataBox<WxWorkAccountAuthBean> = res.data
-                const authBean = getDataFromBox(box)
-                if (box.code === CODE.OK) {
-                    if (authBean) {
-                        WxAuthHelper.saveAuthBean(false, authBean, authStorageType)
-                        if(WxLoginConfig.EnableLog) console.log("successfully login, goto "+ from)
-                        if(WxAuthHelper.hasRoles(roles))
-                        {
-                            gotoUrl(from)
-                        }else{
-                            if(WxLoginConfig.EnableLog) console.log("no permission: need "+roles, +", but "+ JSON.stringify(authBean))
-                            setMsg("没有权限，请联系管理员")
-                        } 
-                    } else {
-                        setMsg("异常：未获取到登录信息")
-                    }
-                } else if (box.code == CODE.NewUser) {
+
+        const p: FetchParams<WxWorkAccountAuthBean> = {
+            url, data: guest, 
+            method: "POST",
+            attachAuthHeader: false, isShowLoading: true,
+            storageType: UseCacheConfig.defaultStorageType,
+            onOK: (authBean) => {
+                WxAuthHelper.saveAuthBean(false, authBean, authStorageType)
+                if(WxLoginConfig.EnableLog) console.log("successfully login, goto "+ from)
+                if(WxAuthHelper.hasRoles(roles))
+                {
+                    gotoUrl(from)
+                }else{
+                    if(WxLoginConfig.EnableLog) console.log("no permission: need "+roles, +", but "+ JSON.stringify(authBean))
+                    setMsg("没有权限，请联系管理员")
+                } 
+            },
+            onNoData: () => {
+                if (WxLoginConfig.EnableLog) console.log("defaultFetchParams: onNoData, no data from remote server")
+                if(UseCacheConfig.showToast) UseCacheConfig.showToast("no data")
+                setMsg("异常：未获取到登录信息")
+            },
+            onKO:(code, msg) => {
+                if (UseCacheConfig.EnableLog) console.log("defaultFetchParams: onKO from remote server: code=" + code + ", msg=" + msg)
+                if (code == CODE.NewUser) {
                     //window.location.href = "/u/register?from=" + from
                     //使用router.navigate容易导致有的手机中注册页面中checkbox和a标签无法点击,原因不明
                     //f7.views.main.router.navigate("/u/register", { props: { from: from } })
                     gotoUrl("/u/register?from="+from)
-                } else if (box.code === "SelfAuth") {
+                } else if (code === "SelfAuth") {
                     //成员自己授权使用，引导用户授权应用
                     setMsg("请自行安装应用")
                    //window.location.href = from 
-                } else {
-                    setMsg("登录失败，请联系管理员：" + box.msg)
                 }
-            }).catch(function (err) {
-                setMsg(err.status + ": " + err.message)
-                console.log(err.status + ": " + err.message)
-            })
+                setMsg("登录失败，请联系管理员：" + msg)
+            },
+            onErr: (errMsg) => {
+                if (UseCacheConfig.EnableLog) console.log("defaultFetchParams: onErr from remote server: errMsg=" + errMsg)
+                setMsg(errMsg)
+            }
+        }
+
+        cachedFetch(p)
+
         return false
     }
 

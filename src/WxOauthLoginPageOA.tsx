@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 
-import { currentHost, StorageType } from "@rwsbillyang/usecache";
+import { currentHref, StorageType } from "@rwsbillyang/usecache";
 
 import { WxLoginConfig } from './Config';
 import { LoginParam } from './datatype/LoginParam';
@@ -36,7 +36,7 @@ export const authorizeUrl = (params: LoginParam) => {
     //构建callback notify的url,后端notify url如下：
     // $notifyPath1/{appId}/{needUserInfo}/{owner?}
     //"$notifyPath2/{appId}"
-    let url = `${currentHost()}${notifyPath}/${params?.appId}`
+    let url = `${currentHref()}${notifyPath}/${params?.appId}`
     if(!forceNeed){//notify1
         url += ("/" + params?.needUserInfo)
         if (params?.owner) url += ("/" + params.owner)

@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 
-import { CODE, DataBox, getDataFromBox, StorageType, UseCacheConfig } from "@rwsbillyang/usecache";
+import { cachedFetch, CODE, defaultFetchParams, FetchParams, StorageType } from "@rwsbillyang/usecache";
 
 
 import { getValue } from './WxOauthHelper';
@@ -12,11 +12,12 @@ import { WxLoginConfig } from './Config';
 import { WxOaAccountAuthBean, WxOaGuest } from './datatype/AuthBean';
 import { LoginParam } from './datatype/LoginParam';
 import { NeedUserInfoType } from './datatype/NeedUserInfoType';
+import { gotoUrl, Page } from './PortLayer';
 import { rolesNeededByPath } from './securedRoute';
 import { pageCenter } from './style';
 import { WxAuthHelper } from "./WxOauthHelper";
 import { scanQrcodeIdKey } from './WxScanQrcodeLogin';
-import { gotoUrl, hideLoading, Page, showLoading } from './PortLayer';
+import { parseUrlQuery } from './utils';
 
 /**
  * 适用于公众号登录
@@ -29,46 +30,36 @@ export function login(guest: WxOaGuest,
     onFail: (msg: string) => void,
     authStorageType: number
 ) {
-    showLoading('登录中...')
-    const p = UseCacheConfig.request?.postWithoutAuth
-    if (!p) {
-        console.warn("WxOatuhNotifyOA: not config UseCacheConfig.request?.postWithouAuth?")
-        return
-    }
 
     //是否扫码登录，是的话传递给后台，单独处理 WxScanQrcodeLoginConfirmPage中设置scanQrcodeId
     const scanQrcodeId = getValue(scanQrcodeIdKey)
     //const loginType = scanQrcodeId ? LoginType.SCAN_QRCODE : LoginType.WECHAT
     //let query = `loginType=${loginType}`
-    const query = (scanQrcodeId)? ("?scanQrcodeId="+scanQrcodeId) : ''
-        
-    p(`/api/wx/oa/account/login${query}`, guest)
-        .then(function (res) {
-            hideLoading()
-            const box: DataBox<WxOaAccountAuthBean> = res.data
-            if (box.code == CODE.OK) {
-                const authBean = getDataFromBox(box)
-                if (authBean) {
-                    WxAuthHelper.saveAuthBean(false,authBean, authStorageType)
-                    onOK(authBean)
-                } else {
-                    console.log(box.msg)
-                    onFail("no data")
-                }
-            } else if (box.code == CODE.NewUser) {
-                onNewUser()
-            } else {
-                console.log(box.msg)
-                onFail(box.msg || "something wrong")
-            }
-        })
-        .catch(function (err) {
-            hideLoading()
-            const msg_ = err.status + ": " + err.message
-            console.log(msg_)
-            onFail(msg_)
-        })
+    const query = (scanQrcodeId) ? ("?scanQrcodeId=" + scanQrcodeId) : ''
+
+    const param: FetchParams<WxOaAccountAuthBean> = defaultFetchParams<WxOaAccountAuthBean>(
+        `/api/wx/oa/account/login${query}`,
+        (authBean) => {
+            WxAuthHelper.saveAuthBean(false, authBean, authStorageType)
+            onOK(authBean)
+        }, guest)
+
+    param.method = "POST"
+    param.onKO = (code, msg) => {
+        if (code == CODE.NewUser) {
+            onNewUser()
+        } else {
+            onFail(msg || "something wrong")
+        }
+    }
+    param.onErr = (errMsg) => {
+        onFail(errMsg)
+    }
+
+    cachedFetch(param)
 }
+
+
 
 
 /**
@@ -82,7 +73,7 @@ export default (props: any) => {
 
     const maybeLoginAndGoBack = (storageType: number, guest: WxOaGuest) => {
         const from = getValue("from")
-        if(WxLoginConfig.EnableLog) console.log("from=" + from)
+        if (WxLoginConfig.EnableLog) console.log("from=" + from)
 
         if (!from) {
             setMsg("登录成功，请关闭后重新打开")
@@ -106,7 +97,7 @@ export default (props: any) => {
             return false
         }
 
-        
+
         //必须是系统注册用户
         login(guest,
             (authBean) => {
@@ -139,13 +130,14 @@ export default (props: any) => {
             var needEnterStep2: Int? = null // for step1: 1 enter step2, or else ends
             ) 
             */
-        const { step, code, appId, state, openId, msg, unionId, needEnterStep2 } = props.f7route.query
+        const query: any = parseUrlQuery() || {}
+        const { step, code, appId, state, openId, msg, unionId, needEnterStep2 } = query
 
 
         //默认使用BothStorage
         const authStorageType = +(getValue("authStorageType") || StorageType.BothStorage.toString())
 
-        
+
         if (code !== 'OK') {
             setMsg(msg)
             console.warn(msg)
@@ -158,7 +150,7 @@ export default (props: any) => {
             console.warn("state=" + state + ", stateInSession=" + stateInSession)
             return false
         }
-        
+
         if (!openId) {
             setMsg("缺少参数：openId")
             console.warn("缺少参数：openId")
@@ -176,13 +168,13 @@ export default (props: any) => {
             } else {
                 const guest: WxOaGuest = { appId, openId, unionId }
 
-                WxAuthHelper.saveAuthBean(true, {guest}, authStorageType)
+                WxAuthHelper.saveAuthBean(true, { guest }, authStorageType)
 
                 maybeLoginAndGoBack(authStorageType, guest)
             }
         } else if (step === '2') {
             const guest: WxOaGuest = { appId, openId, unionId }
-            WxAuthHelper.saveAuthBean(true, {guest}, authStorageType)
+            WxAuthHelper.saveAuthBean(true, { guest }, authStorageType)
 
             maybeLoginAndGoBack(authStorageType, guest)
         } else {
@@ -191,8 +183,8 @@ export default (props: any) => {
 
         return false
     }
-    
-    useEffect(() =>{ 
+
+    useEffect(() => {
         pageInit() //对于RoutableTab，无pageInit等page事件
     }, [])
 

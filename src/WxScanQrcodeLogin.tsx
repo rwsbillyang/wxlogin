@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 
-import { CODE, currentHost, DataBox, fetchWithLoading, getDataFromBox, serializeObject, StorageType, UseCacheConfig } from "@rwsbillyang/usecache";
+import { cachedGet, CODE, currentHref, DataBox, getDataFromBox, serializeObject, StorageType } from "@rwsbillyang/usecache";
 
 import QRCode from 'qrcode.react';
 
@@ -113,7 +113,9 @@ export const PcShowQrcodePage: React.FC = (props: any) => {
                     t2: props.authStorageType || loginParam?.authStorageType
                 }
 
-                const url = currentHost() + "/#!/wx/scanLogin/confirm?" + serializeObject(params)
+                const s = WxLoginConfig.BrowserHistorySeparator
+                if(s) "/"+s 
+                const url = currentHref() +(s? "/"+s : "") + "/wx/scanLogin/confirm?" + serializeObject(params)
 
                 console.log("qrcode url: " + url)
 
@@ -244,13 +246,7 @@ export const WxScanQrcodeLoginConfirmPage: React.FC = (props: any) => {
     }
 
     const cancelLogin = () => {
-        const p = UseCacheConfig.request?.getWithoutAuth
-        if (!p) {
-            console.warn("useWxJsSdk: not config UseCacheConfig.request?.getWithouAuth?")
-            return false
-        } else {
-            fetchWithLoading(() => p("/api/u/cancelQrcodeLogin?id=" + id), () => { })
-        }
+        cachedGet("/api/u/cancelQrcodeLogin?id=" + id, () => { })
         return false
     }
 

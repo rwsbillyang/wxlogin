@@ -23,7 +23,7 @@ export const Page = (props) => {
 }
 
 export const showLoading = (text?: string) => {
-   const f = UseCacheConfig.request?.showLoading
+   const f = UseCacheConfig?.showLoading
    if(f) f(text) 
    else{
     console.log("TODO: showLoading")
@@ -31,7 +31,7 @@ export const showLoading = (text?: string) => {
 }
 
 export const hideLoading = () => {
-    const f = UseCacheConfig.request?.hideLoading
+    const f = UseCacheConfig?.hideLoading
     if(f) f() 
     else{
      console.log("TODO: hideLoading")
@@ -39,7 +39,7 @@ export const hideLoading = () => {
 }
 
 export const toast = (text: string) => {
-    const f = UseCacheConfig.request?.showToast
+    const f = UseCacheConfig?.showToast
     if(f) f(text) 
     else{
      console.log("TODO: hideLoading")

@@ -1,5 +1,5 @@
 
-import {currentHost, StorageType} from "@rwsbillyang/usecache"
+import {currentHref, StorageType} from "@rwsbillyang/usecache"
 
 import React, { useEffect, useState } from 'react';
 
@@ -23,9 +23,9 @@ import { WebAppLoginHelper } from "./WebAppLoginHelper";
  */
  export const authorizeUrlWork = (params: LoginParam) => {
     //构建callback notify的url
-    const host = currentHost()
-    let url = !params.suiteId ? `${host}/api/wx/work/oauth/notify/${params.corpId}/${params.agentId}`
-    : `${host}/api/wx/work/isv/oauth/notify/${params.suiteId}`
+    const href = currentHref()
+    let url = !params.suiteId ? `${href}/api/wx/work/oauth/notify/${params.corpId}/${params.agentId}`
+    : `${href}/api/wx/work/isv/oauth/notify/${params.suiteId}`
     if(params.needUserInfo !== undefined) url += ("&needUserInfo="+params.needUserInfo)
     const redirectUri = encodeURI(url)
     console.log("wxwork: redirectUri="+url+", after encodeURI="+redirectUri)

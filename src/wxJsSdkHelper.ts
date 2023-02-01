@@ -1,17 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react';
 
-import { CODE, DataBox, getDataFromBox, CacheStorage, currentHost, UseCacheConfig } from "@rwsbillyang/usecache"
+import { cachedFetch, CacheStorage, currentHref, FetchParams, UseCacheConfig } from "@rwsbillyang/usecache";
 
 
 import { WxLoginConfig } from './Config';
-import { WebAppLoginHelper } from './WebAppLoginHelper';
 import { LoginParam } from './datatype/LoginParam';
+import { WebAppLoginHelper } from './WebAppLoginHelper';
 
 
 
 
 //分享接口仅激活的成员数超过200人且已经认证的企业才可在微信上调用。
-
 export interface JsSignature {
     appId: string
     timestamp: number
@@ -82,7 +81,7 @@ const defaultWxOaJsApi = [
 ]
 const defaultWxWorkJsApi = [
     "getContext", "getCurExternalContact", "openUserProfile", "selectExternalContact",
-    "onMenuShareAppMessage","onMenuShareWechat","onMenuShareTimeline","shareAppMessage","shareWechatMessage"
+    "onMenuShareAppMessage", "onMenuShareWechat", "onMenuShareTimeline", "shareAppMessage", "shareWechatMessage"
 ]
 
 /**
@@ -155,84 +154,87 @@ export function useWxJsSdk(stausCallbacks?: object, jsApi?: string[]) {
 
             console.log("to getSignautre...isWxWorkApp=" + isWxWorkApp);
 
-            const get = UseCacheConfig.request?.get
-            if (!get) {
-                console.warn("useWxJsSdk: not config UseCacheConfig.request?.get?")
-                return false
-            }
-            const url = window.location.href //currentHost() + "/"
-            let p: Promise<any>
+            const href = window.location.href 
+            let url = ""
+            let data = {}
+           
             //企业微信的jsSDK自定义分享不能在微信中正确设置，使用对应的公众号配置
             //因此：在微信中，就使用公众号的配置; 在企业微信中，就使用企业微信的配置
             if (isWxWorkApp && isWxWorkBrowser()) {//企业微信浏览器中
                 if (!corpId || !agentId) {
                     console.warn("no corpId=" + corpId + " or agentId=" + agentId)
+                    return false
                 }
-                p = get("/api/wx/work/jssdk/signature", { ...params, url }) //后端签名依赖于Referer，但index.html中禁用了，故明确传递过去
+                url = "/api/wx/work/jssdk/signature"
+                data = { ...params, url: href }//后端签名依赖于Referer，但index.html中禁用了，故明确传递过去
             } else if (isWeixinBrowser()) {//微信浏览器中
                 if (!appId) {
                     console.warn("no appId=" + appId)
+                    return false
                 }
-                p = get("/api/wx/oa/jssdk/signature", { appId: appId, url }) //后端签名依赖于Referer，但index.html中禁用了，故明确传递过去
+                url = "/api/wx/oa/jssdk/signature"
+                data = { appId: appId, url: href }//后端签名依赖于Referer，但index.html中禁用了，故明确传递过去
             } else {
                 console.warn("no in weixin browser or wx work browser?")
                 return false
             }
 
-            p.then(res => {
-                updateStatus(WxJsStatus.SDKInitializing)
-
-                const box: DataBox<JsSignature> = res.data
-                if (box.code === CODE.OK) {
-                    const data = getDataFromBox(box)
-                    if (data) {
-                       console.log("get JsSignature return data done!")
-                        wxConfig(isWxWorkApp, data, params, corpId, agentId? +agentId: undefined )
-                       
-                        wx.ready(()=> {
-                            console.log("wx.ready!!!")
-                            updateStatus(WxJsStatus.Ready)
-                        
-                            wx.getNetworkType({
-                                success: function (res: any) {
-                                    const networkType = res.networkType
-                                    console.log("get networkType=" + networkType)
-                                    setNetworkType(networkType)
-                                    if (networkType) CacheStorage.saveItem(WxJsNtKey, networkType)
-                                    updateStatus(WxJsStatus.NetworkTypeLoaded)
-                                
-                                },
-                                fail: function () {
-                                    //不关心获取网络类型错误
-                                    updateStatus(WxJsStatus.NetworkTypeLoadErr)
-                            
-                                    console.log("fail to get networkType")
-                                }
-                            })
+            const param: FetchParams<JsSignature> = {
+                url, data, 
+                method: "GET",
+                attachAuthHeader: false,
+                isShowLoading: false,
+                storageType: UseCacheConfig.defaultStorageType,
+                onOK: (signature)=>{
+                    console.log("get JsSignature return data done!")
+                    wxConfig(isWxWorkApp, signature, params, corpId, agentId ? +agentId : undefined)
+    
+                    wx.ready(() => {
+                        console.log("wx.ready!!!")
+                        updateStatus(WxJsStatus.Ready)
+    
+                        wx.getNetworkType({
+                            success: function (res: any) {
+                                const networkType = res.networkType
+                                console.log("get networkType=" + networkType)
+                                setNetworkType(networkType)
+                                if (networkType) CacheStorage.saveItem(WxJsNtKey, networkType)
+                                updateStatus(WxJsStatus.NetworkTypeLoaded)
+    
+                            },
+                            fail: function () {
+                                //不关心获取网络类型错误
+                                updateStatus(WxJsStatus.NetworkTypeLoadErr)
+    
+                                console.log("fail to get networkType")
+                            }
                         })
-
-                        wx.error((res: any) => {
-                            console.error('wx error', res);
-                            updateStatus(WxJsStatus.WxInitErr)
-                            //saveItem(WxJsStatusKey, WxJsStatus.WxInitErr.toString()) //注释掉，目的在于下次可以尝试
-                        });
-
-                    } else {
-                        const msg = "data is null: " + JSON.stringify(box)
-                        console.warn(msg)
-                        updateStatus(WxJsStatus.ServerResponseErr_NO_DATA)
-                    }
-                } else {
-                    const msg = JSON.stringify(box)
+                    })
+    
+                    wx.error((res: any) => {
+                        console.error('wx error', res);
+                        updateStatus(WxJsStatus.WxInitErr)
+                        //saveItem(WxJsStatusKey, WxJsStatus.WxInitErr.toString()) //注释掉，目的在于下次可以尝试
+                    });
+                },
+                onNoData: () => {
+                    if (UseCacheConfig.EnableLog) console.log("getSignautre: onNoData, no data from remote server")
+                    const msg = "data is null"
                     console.warn(msg)
-
+                    updateStatus(WxJsStatus.ServerResponseErr_NO_DATA)
+                },
+                onKO:(code, msg) => {
+                    if (UseCacheConfig.EnableLog) console.log("getSignautre: onKO from remote server: code=" + code + ", msg=" + msg)
                     updateStatus(WxJsStatus.ServerResponseErr_KO)
+                },
+                onErr: (errMsg) => {
+                    if (UseCacheConfig.EnableLog) console.log("getSignautre: onErr from remote server: errMsg=" + errMsg)
+                    updateStatus(WxJsStatus.RequestErr)
                 }
-            }).catch(err => {
-                const msg = err.message
-                console.warn(msg)
-                updateStatus(WxJsStatus.RequestErr)
-            })
+            }
+            
+            cachedFetch<JsSignature>(param)
+
         } else {
             //spa webapp, not need update signature for every url
             console.log("status=" + status + ",ignore getSignature,  nt=" + networkType)
@@ -255,7 +257,7 @@ export function useWxJsSdk(stausCallbacks?: object, jsApi?: string[]) {
             if (WxLoginConfig.WxWorkConfigEnableAgentConfig) {
                 injectAgentConfig(jsApiList, params, corpId, agentId)
             }
-            else{
+            else {
                 wxWorkConfig(data, params, corpId, agentId)
             }
         } else {
@@ -286,6 +288,7 @@ export function useWxJsSdk(stausCallbacks?: object, jsApi?: string[]) {
             }
         });
     }
+
     function wxWorkConfig(data: JsSignature, params?: LoginParam, corpId?: string, agentId?: number) {
         console.log("wxwork config...")
         wx.config({
@@ -298,9 +301,9 @@ export function useWxJsSdk(stausCallbacks?: object, jsApi?: string[]) {
             jsApiList: jsApiList,// 必填，需要使用的JS接口列表，凡是要调用的接口都需要传进来
             success: function (res: any) {
                 console.log("wxwork wx.config successfully")
-                  //企业微信3.0.24以前的老版本（可通过企业微信UA判断版本号），
+                //企业微信3.0.24以前的老版本（可通过企业微信UA判断版本号），
                 //在调用wx.agentConfig之前，必须确保先成功调用wx.config
-                
+
                 updateStatus(WxJsStatus.WxConfigDone)
             },
             fail: function (res: any) {
@@ -311,76 +314,81 @@ export function useWxJsSdk(stausCallbacks?: object, jsApi?: string[]) {
                     alert('企业微信版本过低，请升级')
                 }
             },
-            complete: function(){//接口调用完成时执行的回调函数，无论成功或失败都会执行。
+            complete: function () {//接口调用完成时执行的回调函数，无论成功或失败都会执行。
                 console.log("wxwork wx.config: complete")
             },
-            cancel:function(){//用户点击取消时的回调函数，仅部分有用户取消操作的api才会用到。
+            cancel: function () {//用户点击取消时的回调函数，仅部分有用户取消操作的api才会用到。
                 console.log("wxwork wx.config: cancel")
-            }, 
-            trigger: function(){// 监听Menu中的按钮点击时触发的方法，该方法仅支持Menu中的相关接口
+            },
+            trigger: function () {// 监听Menu中的按钮点击时触发的方法，该方法仅支持Menu中的相关接口
                 console.log("wxwork wx.config: trigger")
-            } 
+            }
         })
     }
 
 
     function injectAgentConfig(jsapiList: string[], params?: LoginParam, corpId?: string, agentId?: number) {
         console.log("injectAgentConfig...")
-        const get = UseCacheConfig.request?.get
-        if (!get) {
-            console.warn("useWxJsSdk: not config UseCacheConfig.request?.get?")
-            return
-        }
+        
         if (!corpId || !agentId) {
             console.log("no corpId or agentId, ignore injectAgentConfig")
             return
         }
 
-        get("/api/wx/work/jssdk/signature", { ...params, "type": "agent_config", url: currentHost() + "/" }) //后端签名依赖于Referer，但index.html中禁用了，故明确传递过去
-            .then(res => {
-                //setStatus(WxJsStatus.SDKInitializing)
-                const box: DataBox<JsSignature> = res.data
-                if (box.code === CODE.OK) {
-                    const data = getDataFromBox(box)
-                    if (data) {
-                        //https://work.weixin.qq.com/api/doc/90000/90136/90515
-                        //config注入的是企业的身份与权限，而agentConfig注入的是应用的身份与权限。尤其是当调用者为第三方服务商时，
-                        //通过config无法准确区分出调用者是哪个第三方应用，而在部分场景下，又必须严谨区分出第三方应用的身份，
-                        //此时即需要通过agentConfig来注入应用的身份信息。
-                        //调用wx.agentConfig之前，必须确保先成功调用wx.config. 
-                        //注意：从企业微信3.0.24及以后版本（可通过企业微信UA判断版本号），无须先调用wx.config，可直接wx.agentConfig.
-                        //仅部分接口才需要调用agentConfig，需注意每个接口的说明
-                        wx.agentConfig({
-                            corpid: corpId, // 必填，企业微信的corpid，必须与当前登录的企业一致
-                            agentid: agentId, // 必填，企业微信的应用id （e.g. 1000247） ISV模式下不能返回agentId
-                            timestamp: data.timestamp, // 必填，生成签名的时间戳
-                            nonceStr: data.nonceStr, // 必填，生成签名的随机串
-                            signature: data.signature,// 必填，签名，见附录-JS-SDK使用权限签名算法
-                            jsApiList: jsapiList, //必填
-                            success: function (res: any) {
-                                console.log("wx.agentConfig successfully")
-                                updateStatus(WxJsStatus.WxWorkAgentConfigDone)
-                            },
-                            fail: function (res: any) {
-                                console.log("wx.agentConfig failed: res=" + JSON.stringify(res))
-                                updateStatus(WxJsStatus.WxWorkAgentConfigFail)
-                                
-                                if (res.errMsg.indexOf('function not exist') > -1) {
-                                    alert('版本过低请升级')
-                                }
-                            }
-                        });
-                    } else {
-                        console.log("got JsSignature is null, please check backend config correct")
+        const param: FetchParams<JsSignature> = {
+            url:"/api/wx/work/jssdk/signature",
+            data: { ...params, "type": "agent_config", url: currentHref() + "/" }, //后端签名依赖于Referer，但index.html中禁用了，故明确传递过去
+            method: "GET",
+            attachAuthHeader: false,
+            isShowLoading: false,
+            storageType: UseCacheConfig.defaultStorageType,
+            onOK: (signature)=>{
+                //https://work.weixin.qq.com/api/doc/90000/90136/90515
+                //config注入的是企业的身份与权限，而agentConfig注入的是应用的身份与权限。尤其是当调用者为第三方服务商时，
+                //通过config无法准确区分出调用者是哪个第三方应用，而在部分场景下，又必须严谨区分出第三方应用的身份，
+                //此时即需要通过agentConfig来注入应用的身份信息。
+                //调用wx.agentConfig之前，必须确保先成功调用wx.config. 
+                //注意：从企业微信3.0.24及以后版本（可通过企业微信UA判断版本号），无须先调用wx.config，可直接wx.agentConfig.
+                //仅部分接口才需要调用agentConfig，需注意每个接口的说明
+                wx.agentConfig({
+                    corpid: corpId, // 必填，企业微信的corpid，必须与当前登录的企业一致
+                    agentid: agentId, // 必填，企业微信的应用id （e.g. 1000247） ISV模式下不能返回agentId
+                    timestamp: signature.timestamp, // 必填，生成签名的时间戳
+                    nonceStr: signature.nonceStr, // 必填，生成签名的随机串
+                    signature: signature.signature,// 必填，签名，见附录-JS-SDK使用权限签名算法
+                    jsApiList: jsapiList, //必填
+                    success: function (res: any) {
+                        console.log("wx.agentConfig successfully")
+                        updateStatus(WxJsStatus.WxWorkAgentConfigDone)
+                    },
+                    fail: function (res: any) {
+                        console.log("wx.agentConfig failed: res=" + JSON.stringify(res))
+                        updateStatus(WxJsStatus.WxWorkAgentConfigFail)
+
+                        if (res.errMsg.indexOf('function not exist') > -1) {
+                            alert('版本过低请升级')
+                        }
                     }
-                } else {
-                    console.log("got JsSignature is null, please check backend whether enable jsAgentTicket")
-                }
-            }).catch(err => {
-                const msg = err.message
+                });
+            },
+            onNoData: () => {
+                if (UseCacheConfig.EnableLog) console.log("agent_config getSignautre: onNoData, no data from remote server")
+                const msg = "data is null"
                 console.warn(msg)
+                updateStatus(WxJsStatus.ServerResponseErr_NO_DATA)
+            },
+            onKO:(code, msg) => {
+                if (UseCacheConfig.EnableLog) console.log("agent_config getSignautre: onKO from remote server: code=" + code + ", msg=" + msg)
+                updateStatus(WxJsStatus.ServerResponseErr_KO)
+            },
+            onErr: (errMsg) => {
+                if (UseCacheConfig.EnableLog) console.log("agent_config getSignautre: onErr from remote server: errMsg=" + errMsg)
                 updateStatus(WxJsStatus.RequestErr)
-            })
+            }
+        }
+        
+        cachedFetch<JsSignature>(param)
+
     }
 
     return { status, networkType }
