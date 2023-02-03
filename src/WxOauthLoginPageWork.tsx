@@ -15,30 +15,61 @@ import { WxLoginConfig } from "./Config";
 
 
 
+/***
+ * 将配置的分隔符解析为数字，编码进notify的path中，
+ * 后端的BrowserRouterSeperatorUtil将数字解析为分隔符，用于构造通知前端的path
+ */
+export const browserRouterSeperator2Type = () => {
+    let type = "0"
+    switch (WxLoginConfig.BrowserHistorySeparator) {
+        case "#!":
+            type = "1"
+            break
+        case "#":
+            type = "2"
+            break
+        case "":
+        case undefined:
+        case null:
+            type = "0"
+            break
+        default:{
+            console.warn("not support seperator: "+ WxLoginConfig.BrowserHistorySeparator)
+            type = "0"
+        }      
+    }
+    return type
+}
+
 /**
  * 
  * @param params LoginParam
  * @returns 腾讯授权链接url，将重定向到该url进入获取用户openId，或用户授权的腾讯页面
  */
- export const authorizeUrlWork = (params: LoginParam) => {
+export const authorizeUrlWork = (params: LoginParam) => {
     //构建callback notify的url
-    const host = currentHost()
-    let url = !params.suiteId ? `${host}/api/wx/work/oauth/notify/${params.corpId}/${params.agentId}`
-    : `${host}/api/wx/work/isv/oauth/notify/${params.suiteId}`
-    if(params.needUserInfo !== undefined) url += ("&needUserInfo="+params.needUserInfo)
-    const redirectUri = encodeURI(url)
-    console.log("wxwork: redirectUri="+url+", after encodeURI="+redirectUri)
+    const needUserInfo = params.needUserInfo || NeedUserInfoType.Force_Not_Need
+    const href = currentHost()
+    //IsvWork.oauthNotifyPath + "/{suiteId}/{needUserInfo}/{separator}"
+    //Work.oauthNotifyPath + "/{corpId}/{agentId}/{needUserInfo}/{separator}"
+    const separatorType = browserRouterSeperator2Type()
+    let url = !params.suiteId ? `${href}/api/wx/work/oauth/notify/${params.corpId}/${params.agentId}/${needUserInfo}/${separatorType}`
+        : `${href}/api/wx/work/isv/oauth/notify/${params.suiteId}/${needUserInfo}/${separatorType}`
 
-    const scope = params.needUserInfo === NeedUserInfoType.ForceNeed ? SnsScope.base : SnsScope.userInfo
+    const redirectUri = encodeURI(url)
+    console.log("wxwork: redirectUri=" + url + ", after encodeURI=" + redirectUri)
+
+    const scope = needUserInfo === NeedUserInfoType.ForceNeed ? SnsScope.base : SnsScope.userInfo
 
     const state = randomAlphabetNumber(12)
     saveValue("state", state)
     const appId = params.corpId || params.suiteId
     //refer to: https://developer.work.weixin.qq.com/document/path/91022
     //ISV: https://developer.work.weixin.qq.com/document/path/91120
-    return params.agentId? `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${appId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&state=${state}&agentid=${params.agentId}#wechat_redirect` 
-    :`https://open.weixin.qq.com/connect/oauth2/authorize?appid=${appId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&state=${state}#wechat_redirect`
+    return params.agentId ? `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${appId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&state=${state}&agentid=${params.agentId}#wechat_redirect`
+        : `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${appId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&state=${state}#wechat_redirect`
 }
+
 
 /**
  * 显示 登录中...
