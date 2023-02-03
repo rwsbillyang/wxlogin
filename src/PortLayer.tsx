@@ -1,6 +1,7 @@
 import { UseCacheConfig } from '@rwsbillyang/usecache';
 import React from 'react';
-import { useRouter } from 'react-router-manage';
+
+import 'weui'; //https://www.kancloud.cn/ywfwj2008/weui/274515
 
 export const Page = (props) => {
     const {title, subTitle, spacing, className, children, footer} = props;
@@ -51,9 +52,6 @@ export const myAlert = (text: string) => {
 }
 
 export const gotoUrl = (url: string) => {
-  //props.f7router.navigate
-  //f7.views.main.router.navigate(from)  //window.location.href = from
-  const {navigate} = useRouter()
-  navigate(url)
+  window.location.href = url
 }
 

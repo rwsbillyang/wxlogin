@@ -12,6 +12,7 @@ import { pageCenter } from './style';
 import { saveValue } from './WxOauthHelper';
 import { Page } from './PortLayer';
 import { WebAppLoginHelper } from './WebAppLoginHelper';
+import { browserRouterSeperator2Type } from './WxOauthLoginPageWork';
 
 
 
@@ -29,16 +30,23 @@ const NotifyPath = {
  */
 export const authorizeUrl = (params: LoginParam) => {
     //只有强制获取时，则直接进入step2，否则交由后端继续判断
-    const forceNeed = params.needUserInfo === NeedUserInfoType.ForceNeed
-    const notifyPath = forceNeed ? NotifyPath.notify2 : NotifyPath.notify1
-    const scope = forceNeed ? SnsScope.userInfo : SnsScope.base
+    const isDirectlyNotify2 = params.needUserInfo === NeedUserInfoType.ForceNeed
+    const notifyPath = isDirectlyNotify2 ? NotifyPath.notify2 : NotifyPath.notify1
+    const scope = isDirectlyNotify2 ? SnsScope.userInfo : SnsScope.base
 
     //构建callback notify的url,后端notify url如下：
-    // $notifyPath1/{appId}/{needUserInfo}/{owner?}
-    //"$notifyPath2/{appId}"
-    let url = `${currentHref()}${notifyPath}/${params?.appId}`
-    if(!forceNeed){//notify1
-        url += ("/" + params?.needUserInfo)
+    const href = currentHref()
+    const separatorType = browserRouterSeperator2Type() 
+    let url = ""
+    //如果是强行获取用户信息必然直接使用notify2，无需编码needUserInfo；
+    //若是不强行，但notify1通知中要求获取，则是强行，也直接进入notify2，无需编码needUserInfo；
+    if(isDirectlyNotify2){//notify1
+       // $notifyPath2/{appId}/{separator}
+       url = `${href}${notifyPath}/${params?.appId}/${separatorType}`
+    }else{
+        //$notifyPath1/{appId}/{needUserInfo}/{separator}/{owner?}
+        const needUserInfo = params.needUserInfo || NeedUserInfoType.Force_Not_Need
+        url = `${href}${notifyPath}/${params?.appId}/${needUserInfo}/${separatorType}`
         if (params?.owner) url += ("/" + params.owner)
     }
     

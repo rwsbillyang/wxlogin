@@ -13,7 +13,7 @@ import { isWeixinBrowser, isWeixinOrWxWorkBrowser } from "./wxJsSdkHelper";
 
 import { WxAuthHelper } from "./WxOauthHelper";
 import { WxLoginConfig } from "./Config";
-import { RouteTypeI, useRouter } from "react-router-manage";
+import { RouteTypeI } from "react-router-manage";
 import { WebAppLoginHelper } from "./WebAppLoginHelper";
 import { parseUrlQuery } from "./utils";
 
@@ -49,6 +49,7 @@ export const beforeEnter = (to: RouteTypeI | undefined, next: (nextOptionsType?:
         const t = typeof to.code
         if(t === "function"){
             const f = to.code as (route: RouteTypeI) => boolean;
+            if(WxLoginConfig.EnableLog) console.log("code is function, and return true")
             hasAuth = f(to) //如果路由配置code为函数，且执行结果为true，则有权限
         }else if (t === "object"){ //array
             rolesNeeded = to.code as string[]
@@ -56,6 +57,7 @@ export const beforeEnter = (to: RouteTypeI | undefined, next: (nextOptionsType?:
             rolesNeeded = [to.code as string]
         }
     }else{//没有配置code，使用WxLoginConfig的配置，即path中是否有admin等字符
+        if(WxLoginConfig.EnableLog) console.log("no code, check path special characters")
         rolesNeeded = rolesNeededByPath(to?.path  || window.location.href)
     }
 
@@ -68,12 +70,14 @@ export const beforeEnter = (to: RouteTypeI | undefined, next: (nextOptionsType?:
         if(rolesNeeded && rolesNeeded.length > 0){//需要的权限
             if (WxAuthHelper.hasRoles(rolesNeeded)) //已登录
             {
+                if(WxLoginConfig.EnableLog) console.log("already login, go directly")
                 next()
             }else{
+                if(WxLoginConfig.EnableLog) console.log("need: " + JSON.stringify(rolesNeeded) + ", to login...")
                 next(loginComponent)
             }
         }else{//无需权限，即无code配置，path也无admin字符，但配置了拦截（全局或局部），则检查meta.needWxOauth
-            //无需特殊要求
+            if(WxLoginConfig.EnableLog) console.log("not need auth, to check to?.meta?.needWxOauth...")
             switch (to?.meta?.needWxOauth) {
                 case NeedWxOauth.Yes: {
                     tryLogin(next,  loginComponent)
@@ -105,16 +109,15 @@ export const beforeEnter = (to: RouteTypeI | undefined, next: (nextOptionsType?:
   }
 
   function getLoginComponent(){
-    const { params } = useRouter();
     const query = parseUrlQuery()
-
+   
     const loginParam: LoginParam = {
         appId: query["appId"],
         corpId: query["corpId"],
         suiteId: query["suiteId"],
         agentId: query["agentId"],
         from: window.location.href,
-        owner: params["uId"] as string | undefined,//用于查询后端文章属主需不需要获取用户信息 //只有newsDetail待定（根据用户配置确定），其它都不需要获取用户信息（关注时自动获取，其它情况不必要）
+        owner: query["owner"],//用于查询后端文章属主需不需要获取用户信息 //只有newsDetail待定（根据用户配置确定），其它都不需要获取用户信息（关注时自动获取，其它情况不必要）
         needUserInfo: +(query["needUseInfo"] || NeedUserInfoType.Force_Not_Need), //从拦截的链接中获取 从url中提取参数needUserInfo
         authStorageType: +(query["authStorageType"] || StorageType.BothStorage)
     }
@@ -123,9 +126,9 @@ export const beforeEnter = (to: RouteTypeI | undefined, next: (nextOptionsType?:
     //没有的话，则根据是否在微信环境，指定默认类型，不再是默认都为微信公众号类型
     let loginType = query["loginType"]
     if(!loginType){
-    if(isWeixinBrowser()) loginType = LoginType.WECHAT
-    else if(isWeixinOrWxWorkBrowser()) loginType = LoginType.WXWORK
-    else loginType = LoginType.ACCOUNT
+        if(isWeixinBrowser()) loginType = LoginType.WECHAT
+        else if(isWeixinOrWxWorkBrowser()) loginType = LoginType.WXWORK
+        else loginType = LoginType.ACCOUNT
     }
 
 

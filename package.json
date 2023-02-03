@@ -1,6 +1,6 @@
 {
   "name": "@rwsbillyang/wxlogin",
-  "version": "0.10.2",
+  "version": "0.10.4",
   "description": "wechat(weixin) oauth login for frontend based on react-router-dom",
   "repository": {
     "type": "git",
@@ -18,9 +18,12 @@
   "homepage": "https://github.com/rwsbillyang/wxlogin#readme",
   "peerDependencies": {
     "@rwsbillyang/usecache": "^0.10.1",
+    "weui": "^1.1.3",
     "qrcode.react": "^3.1.0",
     "react": "^17.0.0 || ^18.0.0",
     "react-dom": "^17.0.0 || ^18.0.0",
+    "react-router-dom": "^6.8.0",
+    "react-router-manage": "^2.0.0",
     "react-use-websocket": "^2.0.0 || ^3.0.0 || ^4.0.0",
     "tslib": "^2.4.0",
     "use-bus": "^2.5.1"
@@ -125,10 +128,5 @@
   },
   "overrides": {
     "esbuild": "npm:esbuild-wasm@latest"
-  },
-  "dependencies": {
-    "react-router-dom": "^6.8.0",
-    "react-router-manage": "^2.0.0",
-    "weui": "^1.1.3"
   }
 }
