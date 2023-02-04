@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { cachedFetch, CacheStorage, FetchParams, UseCacheConfig } from "@rwsbillyang/usecache";
+import { cachedFetch, CacheStorage, FetchParams, serializeObject, UseCacheConfig } from "@rwsbillyang/usecache";
 
 
 import { WxLoginConfig } from './Config';
@@ -165,23 +165,24 @@ export function useWxJsSdk(stausCallbacks?: object, jsApi?: string[]) {
                     console.warn("no corpId=" + corpId + " or agentId=" + agentId)
                     return false
                 }
-                url = "/api/wx/work/jssdk/signature"
-                data = { corpId, agentId, suiteId: params?.suiteId, url: window.location.href  }//后端签名依赖于Referer，但index.html中可能会禁用，故明确传递过去
+                url = "/api/wx/work/jssdk/signature?"
+                data = { corpId, agentId, suiteId: params?.suiteId}//后端签名依赖于Referer，但index.html中可能会禁用，故明确传递过去
             } else if (isWeixinBrowser()) {//微信浏览器中
                 if (!appId) {
                      if (UseCacheConfig.EnableLog)console.warn("no appId=" + appId)
                     return false
                 }
-                url = "/api/wx/oa/jssdk/signature"
-                data = { appId: appId, url: window.location.href  }//后端签名依赖于Referer，但index.html中可能会禁用，故明确传递过去
+                url = "/api/wx/oa/jssdk/signature?"
+                data = { appId: appId}//后端签名依赖于Referer，但index.html中可能会禁用，故明确传递过去
             } else {
                 if (UseCacheConfig.EnableLog)console.warn("no in weixin browser or wx work browser?")
                 return false
             }
 
             const param: FetchParams<JsSignature> = {
-                url, data, 
-                method: "GET",
+                url: url + serializeObject(data),
+                data: {data: window.location.href}, 
+                method: "POST", //url中因为有多个自己的参数可能被识别成整个请求的参数，导致签名错误：1. 编码 2. 后端使用referrer。 3.改成post请求
                 attachAuthHeader: false,
                 isShowLoading: false,
                 storageType: UseCacheConfig.defaultStorageType,
@@ -293,7 +294,7 @@ export function useWxJsSdk(stausCallbacks?: object, jsApi?: string[]) {
     }
 
     function wxWorkConfig(data: JsSignature, params?: LoginParam, corpId?: string, agentId?: number) {
-        console.log("wxwork config...")
+        if (UseCacheConfig.EnableLog) console.log("wxwork config...")
         wx.config({
             beta: true,// 必须这么写，否则wx.invoke调用形式的jsapi会有问题
             debug: WxLoginConfig.WxWorkConfigDebug, // 开启调试模式,调用的所有api的返回值会在客户端alert出来，若要查看传入的参数，可以在pc端打开，参数信息会通过log打出，仅在pc端时才会打印。
@@ -338,11 +339,11 @@ export function useWxJsSdk(stausCallbacks?: object, jsApi?: string[]) {
             return
         }
 
-        const data = { corpId, agentId, suiteId: params?.suiteId, "type": "agent_config", url: window.location.href } //后端签名依赖于Referer，但index.html中可能会禁用，故明确传递过去
+        const data = { corpId, agentId, suiteId: params?.suiteId, "type": "agent_config"} 
         const param: FetchParams<JsSignature> = {
-            url:"/api/wx/work/jssdk/signature",
-            data: data,
-            method: "GET",
+            url:"/api/wx/work/jssdk/signature?" + serializeObject(data),
+            data: {data: window.location.href},//后端签名依赖于Referer，但index.html中可能会禁用，故明确传递过去
+            method: "POST",//url中因为有多个自己的参数可能被识别成整个请求的参数，导致签名错误：1. 编码 2. 后端使用referrer。 3.改成post请求
             attachAuthHeader: false,
             isShowLoading: false,
             storageType: UseCacheConfig.defaultStorageType,
