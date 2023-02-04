@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 
 import { cachedFetch, CODE, defaultFetchParams, FetchParams, StorageType } from "@rwsbillyang/usecache";
 
-import { useRouter } from "react-router-manage";
+
 import { getValue } from './WxOauthHelper';
 import { authorizeUrl } from './WxOauthLoginPageOA';
 
@@ -17,6 +17,7 @@ import { WxAuthHelper } from "./WxOauthHelper";
 import { scanQrcodeIdKey } from './WxScanQrcodeLogin';
 import { parseUrlQuery } from './utils';
 import { ErrMsg, LoadingToast, OkMsg, Page } from './WeUIComponents';
+import { gotoUrl } from './PortLayer';
 
 /**
  * 适用于公众号登录
@@ -70,7 +71,6 @@ export function login(guest: WxOaGuest,
 export default (props: any) => {
     const [msg, setMsg] = useState<string | undefined>()
     const [err, setErr] = useState<string | undefined>()
-    const { navigate } = useRouter()
 
     const maybeLoginAndGoBack = (storageType: number, guest: WxOaGuest) => {
         const from = getValue("from")
@@ -94,7 +94,7 @@ export default (props: any) => {
         const roles = rolesNeededByPath(from)
         if (!roles) {
             console.log("navigate non-admin page: " + from)
-            navigate(from)
+            gotoUrl(from)
             return false
         }
 
@@ -103,13 +103,13 @@ export default (props: any) => {
         login(guest,
             (authBean) => {
                 if (WxAuthHelper.hasRoles(roles))
-                navigate(from)
+                    gotoUrl(from)
                 else {
                     if (WxLoginConfig.EnableLog) console.log("no permission: need " + roles, +", but " + JSON.stringify(authBean))
                     setErr("没有权限，请联系管理员")
                 }
             },
-            () => { window.location.href = "/u/register?from=" + from }, //使用router.navigate容易导致有的手机中注册页面中checkbox和a标签无法点击,原因不明
+            () => { gotoUrl("/u/register?from=" + from) }, //使用router.navigate容易导致有的手机中注册页面中checkbox和a标签无法点击,原因不明
             (msg) => setErr("登录失败：" + msg), storageType
         )
 

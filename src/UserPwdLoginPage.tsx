@@ -3,10 +3,9 @@ import React, { useState } from 'react';
 
 import { cachedPost, StorageType } from "@rwsbillyang/usecache";
 
-import { useRouter } from "react-router-manage";
 
 import { SysAccountAuthBean } from './datatype/AuthBean';
-import { myAlert } from './PortLayer';
+import { myAlert, gotoUrl } from './PortLayer';
 import { WebAppLoginHelper } from './WebAppLoginHelper';
 import { WxAuthHelper } from './WxOauthHelper';
 import { Loading, Page, WeButton } from './WeUIComponents';
@@ -15,7 +14,6 @@ export const UserPwdLoginPage: React.FC = (props: any) => {
     const [username, setUsername] = useState<string>();
     const [password, setPassword] = useState<string>();
     const [loginSuccess, setLoginSuccess] = useState(false);
-    const { navigate } = useRouter()
     const loginParam = WebAppLoginHelper.getLoginParams()
     const from = loginParam?.from // /wx/webAdmin/login?from=/wx/admin/home
 
@@ -31,7 +29,7 @@ export const UserPwdLoginPage: React.FC = (props: any) => {
                 WxAuthHelper.saveAuthBean(false, data, authStorageType)
                 if (from) {
                     console.log("jump to from=" + from)
-                    navigate(from)  //window.location.href = from 
+                    gotoUrl(from)  //window.location.href = from 
                     //window.location.href = from //navigate跳不过去，改用此行
                     setLoginSuccess(true)
                 } else

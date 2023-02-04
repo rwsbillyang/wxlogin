@@ -1,5 +1,5 @@
 import { UseCacheConfig } from '@rwsbillyang/usecache';
-
+//import { useRouter } from "react-router-manage";
 
 export const showLoading = (text?: string) => {
     const f = UseCacheConfig?.showLoading
@@ -29,11 +29,11 @@ export const myAlert = (text: string) => {
     alert(text)
 }
 
-// export const useGotoUrl2 = (url: string) => {
-//     // const { navigate } = useRouter()
-//     //navigate(url)
-//     window.location.href = url
-// }
+export const gotoUrl = (url: string) => {
+    // const { navigate } = useRouter() //gotoUrl的调用者一般都不不能调用hooks，故不能使用useRouter
+    //navigate(url)
+    window.location.href = url
+}
 
 
 

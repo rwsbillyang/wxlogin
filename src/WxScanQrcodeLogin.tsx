@@ -5,13 +5,12 @@ import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { cachedGet, CODE, currentHref, DataBox, getDataFromBox, serializeObject, StorageType } from "@rwsbillyang/usecache";
 
 import QRCode from 'qrcode.react';
-import { useRouter } from "react-router-manage";
 
 import { WxLoginConfig } from './Config';
 import { WxOaAccountAuthBean, WxWorkAccountAuthBean } from './datatype/AuthBean';
 import { LoginParam } from './datatype/LoginParam';
 import { NeedUserInfoType } from './datatype/NeedUserInfoType';
-import { myAlert, toast } from './PortLayer';
+import { gotoUrl, myAlert, toast } from './PortLayer';
 import { rolesNeededByPath } from './securedRoute';
 import { parseUrlQuery } from './utils';
 import { WebAppLoginHelper } from './WebAppLoginHelper';
@@ -50,7 +49,6 @@ interface ShrinkedLoginParam {
  * @returns 
  */
 export const PcShowQrcodePage: React.FC = (props: any) => {
-    const { navigate } = useRouter()
     const ELAPSE = 180
 
     const [err, setErr] = useState<string | undefined>()
@@ -150,7 +148,7 @@ export const PcShowQrcodePage: React.FC = (props: any) => {
                             if (WxAuthHelper.hasRoles(needRoles)) {
                                 setLoginSuccess(true)
                                 toast("登录成功！")
-                                navigate(from)
+                                gotoUrl(from)
                                 //f7.views.main.router.navigate(from)  //window.location.href = from
                             } else {
                                 if (WxLoginConfig.EnableLog) console.log(`PcShowQrcodePage no permission: need ${needRoles}, but ${JSON.stringify(authBean)}`)
@@ -160,7 +158,7 @@ export const PcShowQrcodePage: React.FC = (props: any) => {
                             if (WxLoginConfig.EnableLog) console.log("navigate non-admin page: " + from)
                             setLoginSuccess(true)
                             toast("登录成功！")
-                            navigate(from)
+                            gotoUrl(from)
                         }
                     } else {
                         console.log("no data in box: " + box.msg)
@@ -216,7 +214,6 @@ export const PcShowQrcodePage: React.FC = (props: any) => {
  * @returns 
  */
 export const WxScanQrcodeLoginConfirmPage: React.FC = (props: any) => {
-    const { navigate } = useRouter()
     const [err, setErr] = useState<string | undefined>()
     const query = parseUrlQuery()
     const id = query["id"] //socket Session id
@@ -278,7 +275,7 @@ export const WxScanQrcodeLoginConfirmPage: React.FC = (props: any) => {
             saveValue(scanQrcodeIdKey, id) //设置扫码登录标志，导致微信登录时采用不同的登录参数
 
             //将导致微信或企业微信授权登录
-            navigate("/wx/scanLogin/user/done?" + serializeObject(loginParam))
+            gotoUrl("/wx/scanLogin/user/done?" + serializeObject(loginParam))
         }
     }
     return (

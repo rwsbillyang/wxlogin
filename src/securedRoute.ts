@@ -116,7 +116,7 @@ export const beforeEnter = (to: RouteTypeI | undefined, next: (nextOptionsType?:
         corpId: query["corpId"],
         suiteId: query["suiteId"],
         agentId: query["agentId"],
-        from: window.location.href,
+        from: window.location.href, //react-router-manage中的to参数不支持获取当前path+query，只好获取全路径url，跳转回去还不能用react-router-manage中的userRouter中的navigate
         owner: query["owner"],//用于查询后端文章属主需不需要获取用户信息 //只有newsDetail待定（根据用户配置确定），其它都不需要获取用户信息（关注时自动获取，其它情况不必要）
         needUserInfo: +(query["needUseInfo"] || NeedUserInfoType.Force_Not_Need), //从拦截的链接中获取 从url中提取参数needUserInfo
         authStorageType: +(query["authStorageType"] || StorageType.BothStorage)
