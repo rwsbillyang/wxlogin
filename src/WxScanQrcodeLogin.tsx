@@ -263,6 +263,7 @@ export const WxScanQrcodeLoginConfirmPage: React.FC = (props: any) => {
 
     const cancelLogin = () => {
         cachedGet("/api/u/cancelQrcodeLogin?id=" + id, () => { })
+        wx.closeWindow()
         return false
     }
 

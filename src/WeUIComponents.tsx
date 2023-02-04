@@ -1,7 +1,6 @@
 import React from "react";
 
 import 'weui'; //https://www.kancloud.cn/ywfwj2008/weui/274515
-import './app.css';
 
 
 export const Page = (props) => {
@@ -61,7 +60,7 @@ export const WeButton: React.FC<{
         if (disabled) c += " weui-btn_disabled" //weui-btn_disabled
     }
 
-    return <a role="button" onClick={onClick} className={c}>{name}</a>
+    return <a role="button" onClick={onClick} className={c} style={{width: "62%"}}>{name}</a>
 }
 
 

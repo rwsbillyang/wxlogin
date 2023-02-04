@@ -74,7 +74,7 @@ export const UserPwdLoginPage: React.FC = (props: any) => {
                     </p>
                 </div>
                 <div className="button-sp-area">
-                    <WeButton name="登录" type="primary" plain onClick={signIn}/>
+                    <WeButton name="登录" type="primary" onClick={signIn}/>
                 </div>
                 <div className="weui-msg__extra-area">
                     <div className="weui-footer">
