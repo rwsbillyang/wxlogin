@@ -20,7 +20,7 @@ export default defineConfig({
     },
     sourcemap: false,
     rollupOptions: {
-      treeshake: true,
+      treeshake: false,
       external: [
         'react',
         'react-dom',

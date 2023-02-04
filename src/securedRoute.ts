@@ -200,7 +200,7 @@ function checkAndSetLoginParams(loginParam: LoginParam, path: string, exceptions
                   const e = exceptions[i]
                   if (WxLoginConfig.EnableLog) console.log("get exception: " + e)
                   if (path.indexOf(e) >= 0) {
-                      loginParam.appId="app"
+                      //loginParam.appId="app"
                       if (WxLoginConfig.EnableLog) console.log("set fake appId done")
                       WebAppLoginHelper.setLoginParams(loginParam)//设置一个fake appId
                       return true

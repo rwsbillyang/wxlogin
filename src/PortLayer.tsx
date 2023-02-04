@@ -1,5 +1,6 @@
 import { UseCacheConfig } from '@rwsbillyang/usecache';
 import React from 'react';
+import { useRouter } from 'react-router-manage';
 
 import 'weui'; //https://www.kancloud.cn/ywfwj2008/weui/274515
 
@@ -51,7 +52,11 @@ export const myAlert = (text: string) => {
     alert(text)
 }
 
-export const gotoUrl = (url: string) => {
-  window.location.href = url
+export const useGotoUrl = (url: string) => {
+    const { navigate } = useRouter()
+  
+    navigate(url)//window.location.href = url
 }
+
+
 

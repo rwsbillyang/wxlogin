@@ -12,9 +12,8 @@ import { WxLoginConfig } from './Config';
 import { WxOaAccountAuthBean, WxOaGuest } from './datatype/AuthBean';
 import { LoginParam } from './datatype/LoginParam';
 import { NeedUserInfoType } from './datatype/NeedUserInfoType';
-import { gotoUrl, Page } from './PortLayer';
+import { useGotoUrl, Page } from './PortLayer';
 import { rolesNeededByPath } from './securedRoute';
-import { pageCenter } from './style';
 import { WxAuthHelper } from "./WxOauthHelper";
 import { scanQrcodeIdKey } from './WxScanQrcodeLogin';
 import { parseUrlQuery } from './utils';
@@ -69,21 +68,22 @@ export function login(guest: WxOaGuest,
  * /wxoa/authNotify?state=Qg5z68nYBTttG9a6&step=1&appId=wxe05e4b65760b950c&code=OK&openId=oV79guKWo0mvIUA2pZQE9CGqwLFE&needUserInfo=1
  */
 export default (props: any) => {
-    const [msg, setMsg] = useState<string>("请稍候...")
+    const [msg, setMsg] = useState<string | undefined>()
+    const [err, setErr] = useState<string | undefined>()
 
     const maybeLoginAndGoBack = (storageType: number, guest: WxOaGuest) => {
         const from = getValue("from")
         if (WxLoginConfig.EnableLog) console.log("from=" + from)
 
         if (!from) {
-            setMsg("登录成功，请关闭后重新打开")
+            setMsg("请关闭后重新打开")
             console.warn("no from")
             //f7.dialog.alert("登录成功，请关闭窗口重新打开")
             return false
         }
 
         if (!WxLoginConfig.backToFromAfterOAuth) {
-            setMsg("登录成功，因配置不跳回from")
+            setMsg("因配置不跳回from")
             console.log("WxLoginConfig.backToFromAfterOAuth=" + WxLoginConfig.backToFromAfterOAuth)
             return false
         }
@@ -93,7 +93,7 @@ export default (props: any) => {
         const roles = rolesNeededByPath(from)
         if (!roles) {
             console.log("navigate non-admin page: " + from)
-            gotoUrl(from)
+            useGotoUrl(from)
             return false
         }
 
@@ -102,14 +102,14 @@ export default (props: any) => {
         login(guest,
             (authBean) => {
                 if (WxAuthHelper.hasRoles(roles))
-                    gotoUrl(from)
+                    useGotoUrl(from)
                 else {
                     if (WxLoginConfig.EnableLog) console.log("no permission: need " + roles, +", but " + JSON.stringify(authBean))
-                    setMsg("没有权限，请联系管理员")
+                    setErr("没有权限，请联系管理员")
                 }
             },
             () => { window.location.href = "/u/register?from=" + from }, //使用router.navigate容易导致有的手机中注册页面中checkbox和a标签无法点击,原因不明
-            (msg) => setMsg("登录失败：" + msg), storageType
+            (msg) => setErr("登录失败：" + msg), storageType
         )
 
         return false
@@ -139,20 +139,20 @@ export default (props: any) => {
 
 
         if (code !== 'OK') {
-            setMsg(msg)
+            setErr(msg)
             console.warn(msg)
             return false
         }
 
         const stateInSession = getValue("state")
         if (state !== stateInSession) {
-            setMsg("页面已过期")
+            setErr("页面已过期")
             console.warn("state=" + state + ", stateInSession=" + stateInSession)
             return false
         }
 
         if (!openId) {
-            setMsg("缺少参数：openId")
+            setErr("缺少参数：openId")
             console.warn("缺少参数：openId")
             return false
         }
@@ -178,7 +178,7 @@ export default (props: any) => {
 
             maybeLoginAndGoBack(authStorageType, guest)
         } else {
-            setMsg("parameter error: step=" + step)
+            setErr("parameter error: step=" + step)
         }
 
         return false
@@ -190,8 +190,31 @@ export default (props: any) => {
 
     return (
         <Page>
-            {msg && <div style={pageCenter}>{msg} <br />
-            </div>}
+            {err ?
+                <div className="weui-msg">
+                    <div className="weui-msg__icon-area"><i className="weui-icon-warn weui-icon_msg"></i></div>
+                    <div className="weui-msg__text-area">
+                        <h2 className="weui-msg__title">出错了</h2>
+                        <p className="weui-msg__desc">{err}</p>
+                    </div>
+                </div> :
+                (msg ?
+                    <div className="weui-msg">
+                        <div className="weui-msg__icon-area"><i className="weui-icon-success weui-icon_msg"></i></div>
+                        <div className="weui-msg__text-area">
+                            <h2 className="weui-msg__title">登录成功</h2>
+                            <p className="weui-msg__desc">{msg}</p>
+                        </div>
+                    </div>
+                    :
+                    <div id="loadingToast">
+                        <div className="weui-mask_transparent"></div>
+                        <div className="weui-toast">
+                            <i className="weui-loading weui-icon_toast"></i>
+                            <p className="weui-toast__content">请稍候...</p>
+                        </div>
+                    </div>
+                )}
         </Page>
     )
 }

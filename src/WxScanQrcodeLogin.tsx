@@ -11,9 +11,8 @@ import { WxLoginConfig } from './Config';
 import { WxOaAccountAuthBean, WxWorkAccountAuthBean } from './datatype/AuthBean';
 import { LoginParam } from './datatype/LoginParam';
 import { NeedUserInfoType } from './datatype/NeedUserInfoType';
-import { gotoUrl, myAlert, Page, toast } from './PortLayer';
+import { useGotoUrl, myAlert, Page, toast } from './PortLayer';
 import { rolesNeededByPath } from './securedRoute';
-import { pageCenter, pageCenter3 } from './style';
 import { parseUrlQuery } from './utils';
 import { WebAppLoginHelper } from './WebAppLoginHelper';
 import { isWeixinBrowser, isWxWorkBrowser } from './wxJsSdkHelper';
@@ -40,9 +39,9 @@ interface ShrinkedLoginParam {
  * https://github.com/robtaussig/react-use-websocket
  * npm install react-use-websocket
  * 
- * https://wx.niukid.com/#!/wx/scanLogin/show?corpId=ww5f4c472a66331eeb&agentId=1000006&from=/wx/admin/home
- * https://wx.niukid.com/#!/wx/scanLogin/show?appId=xxxx&from=/wx/admin/home
- * https://wx.niukid.com/#!/wx/scanLogin/show?corpId=ww5f4c472a66331eeb&agentId=1000006&from=/afterSale/ww5f4c472a66331eeb/admin/customer/list
+ * https://wx.niukid.com/wx/scanLogin/show?corpId=ww5f4c472a66331eeb&agentId=1000006&from=/wx/admin/home
+ * https://wx.niukid.com/wx/scanLogin/show?appId=xxxx&from=/wx/admin/home
+ * https://wx.niukid.com/wx/scanLogin/show?corpId=ww5f4c472a66331eeb&agentId=1000006&from=/afterSale/ww5f4c472a66331eeb/admin/customer/list
  * 
  * @param props 
  * @returns 
@@ -58,7 +57,7 @@ export const PcShowQrcodePage: React.FC = (props: any) => {
     const loginParam = WebAppLoginHelper.getLoginParams()
     const from = loginParam?.from || props.from
 
-  
+
     const host = window.location.host
     // This can also be an async getter function. See notes below on Async Urls.
     const socketUrl = 'wss://' + host + '/api/u/scanQrcodeLogin';
@@ -114,8 +113,8 @@ export const PcShowQrcodePage: React.FC = (props: any) => {
                 }
 
                 const s = WxLoginConfig.BrowserHistorySeparator
-                if(s) "/"+s 
-                const url = currentHref() +(s? "/"+s : "") + "/wx/scanLogin/confirm?" + serializeObject(params)
+                if (s) "/" + s
+                const url = currentHref() + (s ? "/" + s : "") + "/wx/scanLogin/confirm?" + serializeObject(params)
 
                 console.log("qrcode url: " + url)
 
@@ -147,7 +146,7 @@ export const PcShowQrcodePage: React.FC = (props: any) => {
                             if (WxAuthHelper.hasRoles(needRoles)) {
                                 setLoginSuccess(true)
                                 toast("登录成功！")
-                                gotoUrl(from)
+                                useGotoUrl(from)
                                 //f7.views.main.router.navigate(from)  //window.location.href = from
                             } else {
                                 if (WxLoginConfig.EnableLog) console.log(`PcShowQrcodePage no permission: need ${needRoles}, but ${JSON.stringify(authBean)}`)
@@ -157,7 +156,7 @@ export const PcShowQrcodePage: React.FC = (props: any) => {
                             if (WxLoginConfig.EnableLog) console.log("navigate non-admin page: " + from)
                             setLoginSuccess(true)
                             toast("登录成功！")
-                            gotoUrl(from)
+                            useGotoUrl(from)
                         }
                     } else {
                         console.log("no data in box: " + box.msg)
@@ -174,21 +173,36 @@ export const PcShowQrcodePage: React.FC = (props: any) => {
 
     return (
         <Page>
-            {loginSuccess ? <div>正在跳转...</div> : <div style={pageCenter}>
-                <p>
-                    {
-                        url && <QRCode
-                            id="qrCode"
-                            value={url}
-                            size={300} // 二维码的大小
-                            fgColor="#000000" // 二维码的颜色
-                        />
-                    }</p>
-                <p className='text-align-center'>{err ? err : (elapse > 0 ? elapse + "秒后失效" : "已失效！")}</p>
-                <p className='text-align-center'>{url ? (<><span style={{ fontWeight: "bold" }}>{loginParam?.corpId ? "企业微信" : "微信"}</span>  <span>扫一扫登录</span> </>) : connectionStatus}</p>
-            </div>}
+            {loginSuccess ?
+                <div className="weui-loadmore">
+                    <i className="weui-loading"></i>
+                    <span className="weui-loadmore__tips">跳转中...</span>
+                </div>
+                : <div className="weui-msg">
+                    <div className="weui-msg__text-area">
+                        <h2 className="weui-msg__title">{url ? (<><span style={{ fontWeight: "bold" }}>{loginParam?.corpId ? "企业微信 " : "微信 "}</span>  <span>扫码登录</span> </>) : connectionStatus}</h2>
+                        <p className="weui-msg__desc">{err ? err : (elapse > 0 ? elapse + "秒后失效" : "已失效！")}</p>
+                        <p style={{ paddingTop: 20 }}>
+                            {
+                                url && <QRCode
+                                    id="qrCode"
+                                    value={url}
+                                    size={300} // 二维码的大小
+                                    fgColor="#000000" // 二维码的颜色
+                                />
+                            }</p>
+                    </div>
 
+                    <div className="weui-msg__extra-area">
+                        <div className="weui-footer">
+                            <p className="weui-footer__text">Copyright &copy; 2022 版权所有</p>
+                        </div>
+                    </div>
+                </div>
+            }
         </Page>
+
+
     )
 }
 
@@ -219,10 +233,10 @@ export const WxScanQrcodeLoginConfirmPage: React.FC = (props: any) => {
     //PC端将这些参数编码到url二维码中，收件端扫码解析还原出来
 
     const loginParam: LoginParam = {
-        appId: query["p1"], 
-        corpId: query["p2"], 
-        agentId: query["p4"], 
-        suiteId: query["p3"] ,
+        appId: query["p1"],
+        corpId: query["p2"],
+        agentId: query["p4"],
+        suiteId: query["p3"],
         owner: query["p0"],
         needUserInfo: query["t1"] ? +query["t1"] : NeedUserInfoType.Force_Not_Need,
         authStorageType: query["t2"] ? +query["t2"] : StorageType.BothStorage
@@ -260,18 +274,22 @@ export const WxScanQrcodeLoginConfirmPage: React.FC = (props: any) => {
 
             saveValue(scanQrcodeIdKey, id) //设置扫码登录标志，导致微信登录时采用不同的登录参数
 
-
             //将导致微信或企业微信授权登录
-            gotoUrl("/wx/scanLogin/user/done?" + serializeObject(loginParam))
+            useGotoUrl("/wx/scanLogin/user/done?" + serializeObject(loginParam))
         }
     }
     return (
         <Page>
-            <div style={pageCenter3}>
-                <p className="text-align-center">{err ? err : "您正在进行扫码登录"}</p>
-                <div className="button-sp-area">
-                    <a onClick={cancelLogin} role="button" className="weui-btn weui-btn_plain-default">取消登录</a>
-                    <a onClick={confirmLogin} role="button" className="weui-btn weui-btn_plain-primary">确认登录</a>
+            <div className="weui-msg">
+                <div className="weui-msg__text-area">
+                    <h2 className="weui-msg__title">扫码登录</h2>
+                    <p className="weui-msg__desc">{err ? err : "您正在进行扫码登录，确定登录？"} </p>
+                </div>
+                <div className="weui-msg__opr-area">
+                    <p className="weui-btn-area">
+                        <a onClick={confirmLogin} className="weui-btn weui-btn_primary">确认登录</a>
+                        <a onClick={cancelLogin} className="weui-btn weui-btn_default">取消登录</a>
+                    </p>
                 </div>
             </div>
         </Page>
@@ -289,7 +307,7 @@ export const WxScanQrcodeLoginDonePage: React.FC = (props: any) => {
             <div className="weui-msg">
                 <div className="weui-msg__icon-area"><i className="weui-icon-success weui-icon_msg"></i></div>
                 <div className="weui-msg__text-area">
-                    <h2 className="weui-msg__title">扫码认证成功</h2>
+                    <h2 className="weui-msg__title">登录成功</h2>
                 </div>
                 <div className="weui-msg__opr-area">
                     <p className="weui-btn-area">
@@ -298,6 +316,7 @@ export const WxScanQrcodeLoginDonePage: React.FC = (props: any) => {
                 </div>
             </div>
         </Page>
+
     )
 }
 

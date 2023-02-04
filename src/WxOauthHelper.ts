@@ -1,6 +1,7 @@
 import { Cache, CacheStorage, StorageType } from "@rwsbillyang/usecache"
 import { WxLoginConfig } from "./Config"
 import { SysAccountAuthBean, WxOaAccountAuthBean, WxWorkAccountAuthBean } from "./datatype/AuthBean"
+import { WebAppLoginHelper } from "./WebAppLoginHelper"
 
 
 
@@ -134,6 +135,11 @@ export const WxAuthHelper = {
             if (guest.userId) header["X-Auth-UserId"] = guest.userId
             if (guest.externalId) header["X-Auth-ExternalUserId"] = guest.externalId
 
+        }else{
+            const loginParam = WebAppLoginHelper.getLoginParams()
+            const appId = loginParam?.appId || loginParam?.corpId || loginParam?.suiteId
+            if (appId) header["X-Auth-appId"] = appId
+            if (loginParam?.agentId) header["X-Auth-AgentId"] = loginParam.agentId
         }
         return header
     }
@@ -148,7 +154,7 @@ interface MyHeaders {
     "X-Auth-ExternalUserId"?: string | undefined
     "X-Auth-SuiteId"?: string | undefined
     "X-Auth-CorpId"?: string | undefined
-    "X-Auth-AgentId"?: number | undefined
+    "X-Auth-AgentId"?: number | string | undefined
 }
 
 export function saveValue(shortKey: string, value: string) {

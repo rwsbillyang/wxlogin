@@ -8,11 +8,11 @@ import { getValue, WxAuthHelper } from './WxOauthHelper';
 
 import { WxLoginConfig } from "./Config";
 import { WxWorkAccountAuthBean, WxWorkGuest } from "./datatype/AuthBean";
-import { gotoUrl, Page } from "./PortLayer";
+import { useGotoUrl, Page } from "./PortLayer";
 import { rolesNeededByPath } from "./securedRoute";
-import { pageCenter } from "./style";
 import { scanQrcodeIdKey } from "./WxScanQrcodeLogin";
 import { parseUrlQuery } from "./utils";
+
 
 
 
@@ -38,7 +38,8 @@ class OAuthResult(
  * 解决方式是确保指定给腾讯的回调url是https的
  */
 const WxOauthNotifyWork: React.FC = (props: any) => {
-    const [msg, setMsg] = useState<string>("请稍候...")
+    const [msg, setMsg] = useState<string | undefined>()
+    const [err, setErr] = useState<string | undefined>()
     const query: any = parseUrlQuery() || {}
     const { code, state, errMsg, deviceId, openId, userId, externalUserId, corpId, agentId, suiteId } = query
 
@@ -49,103 +50,102 @@ const WxOauthNotifyWork: React.FC = (props: any) => {
         //f7.dialog.preloader('登录中...')
 
         const stateInSession = getValue("state")
-        
+
         if (code !== 'OK') {
-            setMsg(errMsg)
+            setErr(errMsg)
             console.warn(errMsg)
             return false
         }
-        
+
         if (state !== stateInSession) {
-            setMsg("页面可能已过期，可直接关闭")
+            setErr("页面可能已过期，可直接关闭")
             console.warn("state=" + state + ", stateInSession=" + stateInSession)
             return false
         }
 
         if (!corpId && !suiteId) {
-            setMsg("缺少参数：corpId/suiteId")
+            setErr("缺少参数：corpId/suiteId")
             return false
         }
 
         //作为guest，此时已登录成功，此时的agentId可能为空
         const guest: WxWorkGuest = {
-            corpId, agentId, suiteId, userId, externalId:externalUserId, openId, deviceId
+            corpId, agentId, suiteId, userId, externalId: externalUserId, openId, deviceId
         }
 
         //默认使用BothStorage
         const authStorageType = +(getValue("authStorageType") || StorageType.BothStorage.toString())
-        WxAuthHelper.saveAuthBean(true, {guest}, authStorageType)
+        WxAuthHelper.saveAuthBean(true, { guest }, authStorageType)
 
         const from = getValue("from")
         if (WxLoginConfig.EnableLog) console.log("from=" + from)
 
         if (!from) {
-            setMsg("登录成功，请关闭窗口重新打开")
+            setMsg("请关闭窗口重新打开")
             console.warn("no from")
             //f7.dialog.alert("登录成功，请关闭窗口重新打开")
             return false
         }
-        if(!WxLoginConfig.backToFromAfterOAuth){
-            setMsg("登录成功，因配置不跳回from")
-            console.log("wxWork: WxLoginConfig.backToFromAfterOAuth="+WxLoginConfig.backToFromAfterOAuth)
+        if (!WxLoginConfig.backToFromAfterOAuth) {
+            setMsg("因配置不跳回原页面")
+            console.log("wxWork: WxLoginConfig.backToFromAfterOAuth=" + WxLoginConfig.backToFromAfterOAuth)
             return false
         }
 
         //登录后，无需再登录自己的系统，如普通的访客对newsDetail的访问
-         //检查路径中是否包含需要登录的字符
+        //检查路径中是否包含需要登录的字符
         const roles = rolesNeededByPath(from)
-        if(!roles){
+        if (!roles) {
             if (WxLoginConfig.EnableLog) console.log("navigate non-admin page: " + from)
-            gotoUrl(from)
-            
+            useGotoUrl(from)
+
             return false
         }
-        if(WxLoginConfig.EnableLog)console.log("WxWorkOAuthNotify： account login ...")
+        if (WxLoginConfig.EnableLog) console.log("WxWorkOAuthNotify： account login ...")
 
         let url = `/api/wx/work/account/login`
         //是否扫码登录，是的话传递给后台，单独处理 WxScanQrcodeLoginConfirmPage中设置scanQrcodeId
         const scanQrcodeId = getValue(scanQrcodeIdKey)
         if (scanQrcodeId) url = url + "?scanQrcodeId=" + scanQrcodeId
-    
+
 
         const p: FetchParams<WxWorkAccountAuthBean> = {
-            url, data: guest, 
+            url, data: guest,
             method: "POST",
             attachAuthHeader: false, isShowLoading: true,
             storageType: UseCacheConfig.defaultStorageType,
             onOK: (authBean) => {
                 WxAuthHelper.saveAuthBean(false, authBean, authStorageType)
-                if(WxLoginConfig.EnableLog) console.log("successfully login, goto "+ from)
-                if(WxAuthHelper.hasRoles(roles))
-                {
-                    gotoUrl(from)
-                }else{
-                    if(WxLoginConfig.EnableLog) console.log("no permission: need "+roles, +", but "+ JSON.stringify(authBean))
-                    setMsg("没有权限，请联系管理员")
-                } 
+                if (WxLoginConfig.EnableLog) console.log("successfully login, goto " + from)
+                if (WxAuthHelper.hasRoles(roles)) {
+                    useGotoUrl(from)
+                } else {
+                    if (WxLoginConfig.EnableLog) console.log("no permission: need " + roles, +", but " + JSON.stringify(authBean))
+                    setErr("没有权限，请联系管理员")
+                }
             },
             onNoData: () => {
                 if (WxLoginConfig.EnableLog) console.log("defaultFetchParams: onNoData, no data from remote server")
-                if(UseCacheConfig.showToast) UseCacheConfig.showToast("no data")
-                setMsg("异常：未获取到登录信息")
+                if (UseCacheConfig.showToast) UseCacheConfig.showToast("no data")
+                setErr("异常：未获取到登录信息")
             },
-            onKO:(code, msg) => {
+            onKO: (code, msg) => {
                 if (UseCacheConfig.EnableLog) console.log("defaultFetchParams: onKO from remote server: code=" + code + ", msg=" + msg)
                 if (code == CODE.NewUser) {
                     //window.location.href = "/u/register?from=" + from
                     //使用router.navigate容易导致有的手机中注册页面中checkbox和a标签无法点击,原因不明
                     //f7.views.main.router.navigate("/u/register", { props: { from: from } })
-                    gotoUrl("/u/register?from="+from)
+                    useGotoUrl("/u/register?from=" + from)
                 } else if (code === "SelfAuth") {
                     //成员自己授权使用，引导用户授权应用
-                    setMsg("请自行安装应用")
-                   //window.location.href = from 
+                    setErr("请自行安装应用")
+                    //window.location.href = from 
                 }
-                setMsg("登录失败，请联系管理员：" + msg)
+                setErr("登录失败，请联系管理员：" + msg)
             },
             onErr: (errMsg) => {
                 if (UseCacheConfig.EnableLog) console.log("defaultFetchParams: onErr from remote server: errMsg=" + errMsg)
-                setMsg(errMsg)
+                setErr(errMsg)
             }
         }
 
@@ -154,13 +154,38 @@ const WxOauthNotifyWork: React.FC = (props: any) => {
         return false
     }
 
-    useEffect(() =>{ 
+    useEffect(() => {
         pageInit() //对于RoutableTab，无pageInit等page事件
     }, [])
-    
+
     return (
         <Page>
-            <div style={pageCenter}>{msg}</div>
+            {err ?
+                <div className="weui-msg">
+                    <div className="weui-msg__icon-area"><i className="weui-icon-warn weui-icon_msg"></i></div>
+                    <div className="weui-msg__text-area">
+                        <h2 className="weui-msg__title">出错了</h2>
+                        <p className="weui-msg__desc">{err}</p>
+                    </div>
+                </div> :
+                (msg ?
+                    <div className="weui-msg">
+                        <div className="weui-msg__icon-area"><i className="weui-icon-success weui-icon_msg"></i></div>
+                        <div className="weui-msg__text-area">
+                            <h2 className="weui-msg__title">登录成功</h2>
+                            <p className="weui-msg__desc">{msg}</p>
+                        </div>
+                    </div>
+                    :
+                    <div id="loadingToast">
+                        <div className="weui-mask_transparent"></div>
+                        <div className="weui-toast">
+                            <i className="weui-loading weui-icon_toast"></i>
+                            <p className="weui-toast__content">请稍候...</p>
+                        </div>
+                    </div>
+                )
+            }
         </Page>
     )
 }

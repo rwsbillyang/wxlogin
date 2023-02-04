@@ -25,7 +25,6 @@ export const wxUserLoginRoutes: RouteTypeI[] = [
     path: '/wx/scanLogin/user/done', 
     component: WxScanQrcodeLoginDonePage,
     beforeEnter: beforeEnter,
-    code: ["user"], //优先使用code
     meta:{ "needWxOauth": NeedWxOauth.Yes }
   },
   

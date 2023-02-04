@@ -24,10 +24,12 @@ export const WebAppLoginHelper = {
         return false //公众号模式
     },
 
-    //获取cacheKeyPrefix，用于注入useCacheConfig中
-    getKeyPrefix(){ 
+    /**
+     * 获取cache Space prefix，用于注入useCacheConfig中
+     * */
+    getCacheSpace(){ 
         const params = WebAppLoginHelper.getLoginParams()
-        const corpId_ = params?.corpId || params?.appId || params?.suiteId || 'nocorp'
+        const corpId_ = params?.corpId || params?.appId || params?.suiteId || 'appId'
         const key = params?.agentId? `${WxLoginConfig.AppKeyPrefix}/${corpId_}/${params.agentId}/` : `${WxLoginConfig.AppKeyPrefix}/${corpId_}/`
 
         return key

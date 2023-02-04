@@ -8,7 +8,6 @@ import { LoginParam } from "./datatype/LoginParam";
 import { NeedUserInfoType } from "./datatype/NeedUserInfoType";
 import { SnsScope } from "./datatype/SnsScope";
 import { randomAlphabetNumber } from "./utils";
-import { pageCenter } from "./style";
 import { WxLoginConfig } from "./Config";
 import { Page } from "./PortLayer";
 import { WebAppLoginHelper } from "./WebAppLoginHelper";
@@ -31,10 +30,10 @@ export const browserRouterSeperator2Type = () => {
         case null:
             type = "0"
             break
-        default:{
-            console.warn("not support seperator: "+ WxLoginConfig.BrowserHistorySeparator)
+        default: {
+            console.warn("not support seperator: " + WxLoginConfig.BrowserHistorySeparator)
             type = "0"
-        }      
+        }
     }
     return type
 }
@@ -76,17 +75,17 @@ export const authorizeUrlWork = (params: LoginParam) => {
  * 下一步将执行到wxOAuthNotifyxx.tsx
  */
 const WxOauthLoginPageWork: React.FC = (props) => {
-    const [status, setStatus] = useState<string>("请稍候...")
+    const [err, setErr] = useState<string | undefined>()
     const loginParam = WebAppLoginHelper.getLoginParams()
     //const {corpId, suiteId, agentId, from, authStorageType} = loginParam
 
     //对于RoutableTab，无pageInit等page事件
     const pageInit = () => {
         if (!loginParam?.corpId && !loginParam?.suiteId) {
-            setStatus("no corpId/suiteId, please set them in query parameters")
+            setErr("no corpId/suiteId, please set them in query parameters")
         } else {
             if (loginParam?.corpId && !loginParam?.agentId) {
-                setStatus("no agentId, please set it in query parameters")
+                setErr("no agentId, please set it in query parameters")
             } else {
                 if (WxLoginConfig.EnableLog) console.log("wxWork oauth login from " + loginParam?.from)
                 if (loginParam?.from) saveValue("from", loginParam?.from)
@@ -108,7 +107,22 @@ const WxOauthLoginPageWork: React.FC = (props) => {
 
     return (
         <Page>
-            <div style={pageCenter}>{status}</div>
+            {err ?
+                <div className="weui-msg">
+                    <div className="weui-msg__icon-area"><i className="weui-icon-warn weui-icon_msg"></i></div>
+                    <div className="weui-msg__text-area">
+                        <h2 className="weui-msg__title">出错了</h2>
+                        <p className="weui-msg__desc">{err}</p>
+                    </div>
+                </div> :
+                <div id="loadingToast">
+                    <div className="weui-mask_transparent"></div>
+                    <div className="weui-toast">
+                        <i className="weui-loading weui-icon_toast"></i>
+                        <p className="weui-toast__content">请稍候...</p>
+                    </div>
+                </div>
+            }
         </Page>
     )
 }

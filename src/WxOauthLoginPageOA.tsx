@@ -8,13 +8,10 @@ import { LoginParam } from './datatype/LoginParam';
 import { NeedUserInfoType } from './datatype/NeedUserInfoType';
 import { SnsScope } from './datatype/SnsScope';
 import { randomAlphabetNumber } from './utils';
-import { pageCenter } from './style';
 import { saveValue } from './WxOauthHelper';
 import { Page } from './PortLayer';
 import { WebAppLoginHelper } from './WebAppLoginHelper';
 import { browserRouterSeperator2Type } from './WxOauthLoginPageWork';
-
-
 
 
 //ktorKit中默认值
@@ -36,20 +33,20 @@ export const authorizeUrl = (params: LoginParam) => {
 
     //构建callback notify的url,后端notify url如下：
     const href = currentHref()
-    const separatorType = browserRouterSeperator2Type() 
+    const separatorType = browserRouterSeperator2Type()
     let url = ""
     //如果是强行获取用户信息必然直接使用notify2，无需编码needUserInfo；
     //若是不强行，但notify1通知中要求获取，则是强行，也直接进入notify2，无需编码needUserInfo；
-    if(isDirectlyNotify2){//notify1
-       // $notifyPath2/{appId}/{separator}
-       url = `${href}${notifyPath}/${params?.appId}/${separatorType}`
-    }else{
+    if (isDirectlyNotify2) {//notify1
+        // $notifyPath2/{appId}/{separator}
+        url = `${href}${notifyPath}/${params?.appId}/${separatorType}`
+    } else {
         //$notifyPath1/{appId}/{needUserInfo}/{separator}/{owner?}
         const needUserInfo = params.needUserInfo || NeedUserInfoType.Force_Not_Need
         url = `${href}${notifyPath}/${params?.appId}/${needUserInfo}/${separatorType}`
         if (params?.owner) url += ("/" + params.owner)
     }
-    
+
     const redirectUri = encodeURI(url)
     console.log("redirectUri=" + url + ", after encodeURI=" + redirectUri)
 
@@ -60,15 +57,15 @@ export const authorizeUrl = (params: LoginParam) => {
 
 
 export const WxOauthLoginPageOA: React.FC = (props) => {
-    const [status, setStatus] = useState<string>("请稍候...")
+    const [err, setErr] = useState<string | undefined>()
     const loginParam = WebAppLoginHelper.getLoginParams()
-   // const { appId, from, authStorageType } = loginParam
+    // const { appId, from, authStorageType } = loginParam
 
 
     //在RoutableTabs中，故onPageInit不被trigger，故使用useEffect
     useEffect(() => {
         if (!loginParam?.appId) {
-            setStatus("no appId, please set appId in query parameters")
+            setErr("no appId, please set appId in query parameters")
         } else {
             //const bean = WxAuthHelper.getAuthBean(true) || WxAuthHelper.getAuthBean(false) 
             //const user = (bean)? bean as WxOaAccountAuthBean : undefined
@@ -78,14 +75,29 @@ export const WxOauthLoginPageOA: React.FC = (props) => {
             saveValue("authStorageType", loginParam?.authStorageType?.toString() || StorageType.BothStorage.toString())
 
             const url = authorizeUrl(loginParam)
-            if(WxLoginConfig.JumpToAuthrize)
+            if (WxLoginConfig.JumpToAuthrize)
                 window.location.href = url
         }
     }, [])
 
     return (
         <Page>
-            <div style={pageCenter}>{status}</div>
+            {err ?
+                <div className="weui-msg">
+                    <div className="weui-msg__icon-area"><i className="weui-icon-warn weui-icon_msg"></i></div>
+                    <div className="weui-msg__text-area">
+                        <h2 className="weui-msg__title">出错了</h2>
+                        <p className="weui-msg__desc">{err}</p>
+                    </div>
+                </div> :
+                <div id="loadingToast">
+                    <div className="weui-mask_transparent"></div>
+                    <div className="weui-toast">
+                        <i className="weui-loading weui-icon_toast"></i>
+                        <p className="weui-toast__content">请稍候...</p>
+                    </div>
+                </div>
+            }
         </Page>
     )
 }
