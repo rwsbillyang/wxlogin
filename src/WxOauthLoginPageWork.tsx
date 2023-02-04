@@ -106,7 +106,7 @@ const WxOauthLoginPageWork: React.FC = (props) => {
     }, [])
 
     return (
-        <Page>
+        <Page  id="workLogin">
              {err ? <ErrMsg errMsg={err}/>: <LoadingToast text="请稍候..." />}
         </Page>
     )

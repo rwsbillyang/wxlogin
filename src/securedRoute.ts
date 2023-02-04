@@ -9,7 +9,7 @@ import {UserPwdLoginPage} from "./UserPwdLoginPage";
 import { LoginType } from "./datatype/LoginType";
 import { PcShowQrcodePage } from "./WxScanQrcodeLogin";
 
-import { isWeixinBrowser, isWeixinOrWxWorkBrowser } from "./wxJsSdkHelper";
+import { isWeixinBrowser, isWxWorkBrowser,isWeixinOrWxWorkBrowser } from "./wxJsSdkHelper";
 
 import { WxAuthHelper } from "./WxOauthHelper";
 import { WxLoginConfig } from "./Config";
@@ -127,21 +127,47 @@ export const beforeEnter = (to: RouteTypeI | undefined, next: (nextOptionsType?:
     let loginType = query["loginType"]
     if(!loginType){
         if(isWeixinBrowser()) loginType = LoginType.WECHAT
-        else if(isWeixinOrWxWorkBrowser()) loginType = LoginType.WXWORK
+        else if(isWxWorkBrowser()) loginType = LoginType.WXWORK
         else loginType = LoginType.ACCOUNT
     }
 
 
     let loginComponent: ((props: any) => JSX.Element) | React.FC<LoginParam>
-    if (loginType === LoginType.ACCOUNT) {
-        loginComponent = UserPwdLoginPage
-    } else if (loginType === LoginType.SCAN_QRCODE) {
-        loginComponent = PcShowQrcodePage
-    } else if (loginType === LoginType.MOBILE) {
-        loginComponent = UserPwdLoginPage //暂时也使用账户密码登录
-    } else {
-        loginComponent = WebAppLoginHelper.isWxWorkApp() ? WxOauthLoginPageWork : WxOauthLoginPageOA
+    switch(loginType){
+        case LoginType.ACCOUNT:
+        case LoginType.MOBILE:    //暂时也使用账户密码登录
+        {
+            loginComponent = UserPwdLoginPage
+            break
+        } 
+        case LoginType.SCAN_QRCODE:
+        {
+            loginComponent = PcShowQrcodePage
+            break
+        }
+        case LoginType.WECHAT:
+        {
+            if(!loginParam.appId){
+                console.warn("LoginType.WECHAT, but no appId? loginParams="+JSON.stringify(loginParam))
+            }
+            loginComponent = WxOauthLoginPageOA
+            break
+        }
+        case LoginType.WXWORK:
+        {
+            if(!WebAppLoginHelper.isWxWorkApp(loginParam)){
+                console.warn("LoginType.WXWORK, but no corpId/agentId? loginParams="+JSON.stringify(loginParam))
+            }
+            loginComponent = WxOauthLoginPageWork
+            break
+        }
+        default:
+        {
+            loginComponent = UserPwdLoginPage
+            break
+        }
     }
+    
 
     return {loginComponent, loginParam}
   }

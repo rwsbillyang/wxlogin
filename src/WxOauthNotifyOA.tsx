@@ -190,7 +190,7 @@ export default (props: any) => {
     }, [])
 
     return (
-        <Page>
+        <Page id="oaLoginNotify">
             {err ? <ErrMsg errMsg={err}/>:(msg ? <OkMsg title="登录成功" msg={msg}/>: <LoadingToast text="请稍候..." />)}
         </Page>
     )

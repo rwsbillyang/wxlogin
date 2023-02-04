@@ -166,7 +166,7 @@ export function useWxJsSdk(stausCallbacks?: object, jsApi?: string[]) {
                     return false
                 }
                 url = "/api/wx/work/jssdk/signature"
-                data = { ...params, url: window.location.href  }//后端签名依赖于Referer，但index.html中可能会禁用，故明确传递过去
+                data = { corpId, agentId, suiteId: params?.suiteId, url: window.location.href  }//后端签名依赖于Referer，但index.html中可能会禁用，故明确传递过去
             } else if (isWeixinBrowser()) {//微信浏览器中
                 if (!appId) {
                      if (UseCacheConfig.EnableLog)console.warn("no appId=" + appId)
@@ -338,7 +338,7 @@ export function useWxJsSdk(stausCallbacks?: object, jsApi?: string[]) {
             return
         }
 
-        const data = { ...params, "type": "agent_config", url: window.location.href } //后端签名依赖于Referer，但index.html中可能会禁用，故明确传递过去
+        const data = { corpId, agentId, suiteId: params?.suiteId, "type": "agent_config", url: window.location.href } //后端签名依赖于Referer，但index.html中可能会禁用，故明确传递过去
         const param: FetchParams<JsSignature> = {
             url:"/api/wx/work/jssdk/signature",
             data: data,

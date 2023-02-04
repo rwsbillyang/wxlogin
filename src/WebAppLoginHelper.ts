@@ -17,9 +17,9 @@ export const WebAppLoginHelper = {
         if (p) return JSON.parse(p)
         else return undefined
     },
-    isWxWorkApp(){
-        if(WxLoginConfig.EnableLog) console.log("isWxWorkApp call getCorpParams")
-        const p = WebAppLoginHelper.getLoginParams()
+    isWxWorkApp(loginParam?: LoginParam){
+        if(WxLoginConfig.EnableLog) console.log("isWxWorkApp call getLoginParams")
+        const p = loginParam || WebAppLoginHelper.getLoginParams()
         if(p?.corpId && p?.agentId) return true //企业微信模式
         return false //公众号模式
     },
