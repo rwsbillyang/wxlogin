@@ -5,7 +5,7 @@ import { LoginParam } from "./datatype/LoginParam"
 
 import { LoginType } from "./datatype/LoginType"
 import { NeedUserInfoType } from "./datatype/NeedUserInfoType"
-import ErrorPage from "./ErrorPage"
+
 import { enableVConsole, isVConsoleEnabled, loadJS, tryLoadWxJs } from "./loadjs"
 import {  getQueryString, getQueryStringByRegx, parseUrlQuery, randomAlphabet, randomAlphabetNumber, randomNumber } from "./utils"
 import { wxUserLoginRoutes } from "./routes"
@@ -14,23 +14,30 @@ import { WebAppLoginHelper } from "./WebAppLoginHelper"
 import { isWeixinBrowser, isWeixinOrWxWorkBrowser, isWxWorkBrowser, useWxJsSdk, WxInitResult, WxJsStatus } from "./wxJsSdkHelper"
 import { WxAuthHelper } from "./WxOauthHelper"
 import { setRelayShareInfo, ShareInfo } from "./wxShareHelper"
+import { ErrMsg, ErrorPage, Loading, LoadingToast, OkMsg, Page, WeButton } from "./WeUIComponents"
+import { UserPwdLoginPage } from "./UserPwdLoginPage"
+import { WxOauthLoginPageOA } from "./WxOauthLoginPageOA"
+import WxOauthLoginPageWork from "./WxOauthLoginPageWork"
+import WxOauthNotifyWork from "./WxOauthNotifyWork"
+import WxOauthNotifyOA from "./WxOauthNotifyOA"
+import { PcShowQrcodePage, WxScanQrcodeLoginConfirmPage, WxScanQrcodeLoginDonePage } from "./WxScanQrcodeLogin"
+import { SnsScope } from "./datatype/SnsScope"
 
 
 export type{
      AuthBean, Profile,ExpireInfo,WxOaGuest,SysAccountAuthBean,WxOaAccountAuthBean,WxWorkGuest,WxWorkAccountAuthBean,
-     LoginParam, 
+     LoginParam, SnsScope,
     WxInitResult, ShareInfo
 }
 
 export {
-    ErrorPage, 
-    //UserPwdLoginPage, WxOauthLoginPageOA, WxOauthLoginPageWork,
-    //WxOauthNotifyWork, WxOauthNotifyOA,
-    //PcShowQrcodePage, WxScanQrcodeLoginConfirmPage,  WxScanQrcodeLoginDonePage,
+    Page, ErrorPage, Loading, LoadingToast, OkMsg, ErrMsg, WeButton,
+    UserPwdLoginPage, WxOauthLoginPageOA, WxOauthLoginPageWork,
+    WxOauthNotifyWork, WxOauthNotifyOA,
+    PcShowQrcodePage, WxScanQrcodeLoginConfirmPage,  WxScanQrcodeLoginDonePage,
     WxLoginConfig, 
     wxUserLoginRoutes,beforeEnter,
-    LoginType, NeedUserInfoType, NeedWxOauth,
-    //SnsScope,
+    LoginType, NeedUserInfoType, NeedWxOauth,   
     WxAuthHelper, WebAppLoginHelper,
     isWeixinOrWxWorkBrowser,isWeixinBrowser,isWxWorkBrowser,
     WxJsStatus, useWxJsSdk,setRelayShareInfo,

@@ -3,17 +3,19 @@ import React, { useState } from 'react';
 
 import { cachedPost, StorageType } from "@rwsbillyang/usecache";
 
+import { useRouter } from "react-router-manage";
 
 import { SysAccountAuthBean } from './datatype/AuthBean';
-import { useGotoUrl, myAlert, Page } from './PortLayer';
+import { myAlert } from './PortLayer';
 import { WebAppLoginHelper } from './WebAppLoginHelper';
 import { WxAuthHelper } from './WxOauthHelper';
+import { Loading, Page, WeButton } from './WeUIComponents';
 
 export const UserPwdLoginPage: React.FC = (props: any) => {
     const [username, setUsername] = useState<string>();
     const [password, setPassword] = useState<string>();
     const [loginSuccess, setLoginSuccess] = useState(false);
-
+    const { navigate } = useRouter()
     const loginParam = WebAppLoginHelper.getLoginParams()
     const from = loginParam?.from // /wx/webAdmin/login?from=/wx/admin/home
 
@@ -29,7 +31,7 @@ export const UserPwdLoginPage: React.FC = (props: any) => {
                 WxAuthHelper.saveAuthBean(false, data, authStorageType)
                 if (from) {
                     console.log("jump to from=" + from)
-                    useGotoUrl(from)  //window.location.href = from 
+                    navigate(from)  //window.location.href = from 
                     //window.location.href = from //navigate跳不过去，改用此行
                     setLoginSuccess(true)
                 } else
@@ -39,12 +41,8 @@ export const UserPwdLoginPage: React.FC = (props: any) => {
     }
 
     return (loginSuccess ?
-        <div className="weui-loadmore">
-            <i className="weui-loading"></i>
-            <span className="weui-loadmore__tips">跳转中...</span>
-        </div>
-        :
-        <Page>
+        <Loading text="跳转中..."/>
+        :<Page>
             <div className="weui-msg">
                 <div className="weui-msg__text-area">
                     <h2 className="weui-msg__title">用户登录</h2>
@@ -57,8 +55,8 @@ export const UserPwdLoginPage: React.FC = (props: any) => {
                                 <div className="weui-cell__bd">
                                     <input className="weui-input" value={username || ''} placeholder="请输入用户名"
                                         onInput={(e) => {
-                                            //const target = e.target as HTMLInputElement
-                                            setUsername(e.target.value);
+                                            const target = e.target as HTMLInputElement
+                                            setUsername(target.value);
                                         }} />
                                 </div>
                             </div>
@@ -67,7 +65,8 @@ export const UserPwdLoginPage: React.FC = (props: any) => {
                                 <div className="weui-cell__bd">
                                     <input className="weui-input" type="password" value={password || ''}
                                         onInput={(e) => {
-                                            setPassword(e.target.value);
+                                            const target = e.target as HTMLInputElement
+                                            setPassword(target.value);
                                         }} />
                                 </div>
                             </div>
@@ -75,7 +74,7 @@ export const UserPwdLoginPage: React.FC = (props: any) => {
                     </p>
                 </div>
                 <div className="button-sp-area">
-                    <a role="button" className="weui-btn weui-btn_primary" onClick={signIn}>登录</a>
+                    <WeButton name="登录" type="primary" plain onClick={signIn}/>
                 </div>
                 <div className="weui-msg__extra-area">
                     <div className="weui-footer">

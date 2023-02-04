@@ -1,7 +1,8 @@
 import { RouteTypeI } from 'react-router-manage';
-import ErrorPage from './ErrorPage';
+
 import { beforeEnter, NeedWxOauth } from './securedRoute';
 import {UserPwdLoginPage} from './UserPwdLoginPage';
+import { ErrorPage } from './WeUIComponents';
 import { WxOauthLoginPageOA } from './WxOauthLoginPageOA';
 import WxOauthLoginPageWork from './WxOauthLoginPageWork';
 import WxOauthNotifyOA from './WxOauthNotifyOA';

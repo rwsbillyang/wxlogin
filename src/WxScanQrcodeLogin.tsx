@@ -5,18 +5,21 @@ import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { cachedGet, CODE, currentHref, DataBox, getDataFromBox, serializeObject, StorageType } from "@rwsbillyang/usecache";
 
 import QRCode from 'qrcode.react';
+import { useRouter } from "react-router-manage";
 
-import 'weui'; //https://www.kancloud.cn/ywfwj2008/weui/274515
 import { WxLoginConfig } from './Config';
 import { WxOaAccountAuthBean, WxWorkAccountAuthBean } from './datatype/AuthBean';
 import { LoginParam } from './datatype/LoginParam';
 import { NeedUserInfoType } from './datatype/NeedUserInfoType';
-import { useGotoUrl, myAlert, Page, toast } from './PortLayer';
+import { myAlert, toast } from './PortLayer';
 import { rolesNeededByPath } from './securedRoute';
 import { parseUrlQuery } from './utils';
 import { WebAppLoginHelper } from './WebAppLoginHelper';
 import { isWeixinBrowser, isWxWorkBrowser } from './wxJsSdkHelper';
 import { saveValue, WxAuthHelper } from './WxOauthHelper';
+
+import { Loading, Page, WeButton } from './WeUIComponents';
+
 
 export const scanQrcodeIdKey = "ScanQrcodeIdKey"
 
@@ -47,6 +50,7 @@ interface ShrinkedLoginParam {
  * @returns 
  */
 export const PcShowQrcodePage: React.FC = (props: any) => {
+    const { navigate } = useRouter()
     const ELAPSE = 180
 
     const [err, setErr] = useState<string | undefined>()
@@ -146,7 +150,7 @@ export const PcShowQrcodePage: React.FC = (props: any) => {
                             if (WxAuthHelper.hasRoles(needRoles)) {
                                 setLoginSuccess(true)
                                 toast("登录成功！")
-                                useGotoUrl(from)
+                                navigate(from)
                                 //f7.views.main.router.navigate(from)  //window.location.href = from
                             } else {
                                 if (WxLoginConfig.EnableLog) console.log(`PcShowQrcodePage no permission: need ${needRoles}, but ${JSON.stringify(authBean)}`)
@@ -156,7 +160,7 @@ export const PcShowQrcodePage: React.FC = (props: any) => {
                             if (WxLoginConfig.EnableLog) console.log("navigate non-admin page: " + from)
                             setLoginSuccess(true)
                             toast("登录成功！")
-                            useGotoUrl(from)
+                            navigate(from)
                         }
                     } else {
                         console.log("no data in box: " + box.msg)
@@ -174,10 +178,7 @@ export const PcShowQrcodePage: React.FC = (props: any) => {
     return (
         <Page>
             {loginSuccess ?
-                <div className="weui-loadmore">
-                    <i className="weui-loading"></i>
-                    <span className="weui-loadmore__tips">跳转中...</span>
-                </div>
+                <Loading text="跳转中..."/>
                 : <div className="weui-msg">
                     <div className="weui-msg__text-area">
                         <h2 className="weui-msg__title">{url ? (<><span style={{ fontWeight: "bold" }}>{loginParam?.corpId ? "企业微信 " : "微信 "}</span>  <span>扫码登录</span> </>) : connectionStatus}</h2>
@@ -215,6 +216,7 @@ export const PcShowQrcodePage: React.FC = (props: any) => {
  * @returns 
  */
 export const WxScanQrcodeLoginConfirmPage: React.FC = (props: any) => {
+    const { navigate } = useRouter()
     const [err, setErr] = useState<string | undefined>()
     const query = parseUrlQuery()
     const id = query["id"] //socket Session id
@@ -275,7 +277,7 @@ export const WxScanQrcodeLoginConfirmPage: React.FC = (props: any) => {
             saveValue(scanQrcodeIdKey, id) //设置扫码登录标志，导致微信登录时采用不同的登录参数
 
             //将导致微信或企业微信授权登录
-            useGotoUrl("/wx/scanLogin/user/done?" + serializeObject(loginParam))
+            navigate("/wx/scanLogin/user/done?" + serializeObject(loginParam))
         }
     }
     return (
@@ -287,8 +289,8 @@ export const WxScanQrcodeLoginConfirmPage: React.FC = (props: any) => {
                 </div>
                 <div className="weui-msg__opr-area">
                     <p className="weui-btn-area">
-                        <a onClick={confirmLogin} className="weui-btn weui-btn_primary">确认登录</a>
-                        <a onClick={cancelLogin} className="weui-btn weui-btn_default">取消登录</a>
+                        <WeButton name="确认登录" type="primary"  onClick={confirmLogin}/>
+                        <WeButton name="取消登录" type="default"  onClick={cancelLogin}/>
                     </p>
                 </div>
             </div>
@@ -311,12 +313,11 @@ export const WxScanQrcodeLoginDonePage: React.FC = (props: any) => {
                 </div>
                 <div className="weui-msg__opr-area">
                     <p className="weui-btn-area">
-                        <a onClick={() => wx.closeWindow()} role="button" className="weui-btn weui-btn_primary">关闭</a>
+                        <WeButton name="关闭" type="primary" plain onClick={() => wx.closeWindow()}/>
                     </p>
                 </div>
             </div>
         </Page>
-
     )
 }
 

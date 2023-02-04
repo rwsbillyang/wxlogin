@@ -3,15 +3,16 @@ import { cachedFetch, CODE, FetchParams, StorageType, UseCacheConfig } from "@rw
 
 import React, { useEffect, useState } from 'react';
 
+import { useRouter } from "react-router-manage";
 
 import { getValue, WxAuthHelper } from './WxOauthHelper';
 
 import { WxLoginConfig } from "./Config";
 import { WxWorkAccountAuthBean, WxWorkGuest } from "./datatype/AuthBean";
-import { useGotoUrl, Page } from "./PortLayer";
 import { rolesNeededByPath } from "./securedRoute";
 import { scanQrcodeIdKey } from "./WxScanQrcodeLogin";
 import { parseUrlQuery } from "./utils";
+import { ErrMsg, LoadingToast, OkMsg, Page } from "./WeUIComponents";
 
 
 
@@ -38,6 +39,7 @@ class OAuthResult(
  * 解决方式是确保指定给腾讯的回调url是https的
  */
 const WxOauthNotifyWork: React.FC = (props: any) => {
+    const { navigate } = useRouter()
     const [msg, setMsg] = useState<string | undefined>()
     const [err, setErr] = useState<string | undefined>()
     const query: any = parseUrlQuery() || {}
@@ -97,7 +99,7 @@ const WxOauthNotifyWork: React.FC = (props: any) => {
         const roles = rolesNeededByPath(from)
         if (!roles) {
             if (WxLoginConfig.EnableLog) console.log("navigate non-admin page: " + from)
-            useGotoUrl(from)
+            navigate(from)
 
             return false
         }
@@ -118,7 +120,7 @@ const WxOauthNotifyWork: React.FC = (props: any) => {
                 WxAuthHelper.saveAuthBean(false, authBean, authStorageType)
                 if (WxLoginConfig.EnableLog) console.log("successfully login, goto " + from)
                 if (WxAuthHelper.hasRoles(roles)) {
-                    useGotoUrl(from)
+                    navigate(from)
                 } else {
                     if (WxLoginConfig.EnableLog) console.log("no permission: need " + roles, +", but " + JSON.stringify(authBean))
                     setErr("没有权限，请联系管理员")
@@ -135,7 +137,7 @@ const WxOauthNotifyWork: React.FC = (props: any) => {
                     //window.location.href = "/u/register?from=" + from
                     //使用router.navigate容易导致有的手机中注册页面中checkbox和a标签无法点击,原因不明
                     //f7.views.main.router.navigate("/u/register", { props: { from: from } })
-                    useGotoUrl("/u/register?from=" + from)
+                    navigate("/u/register?from=" + from)
                 } else if (code === "SelfAuth") {
                     //成员自己授权使用，引导用户授权应用
                     setErr("请自行安装应用")
@@ -160,32 +162,7 @@ const WxOauthNotifyWork: React.FC = (props: any) => {
 
     return (
         <Page>
-            {err ?
-                <div className="weui-msg">
-                    <div className="weui-msg__icon-area"><i className="weui-icon-warn weui-icon_msg"></i></div>
-                    <div className="weui-msg__text-area">
-                        <h2 className="weui-msg__title">出错了</h2>
-                        <p className="weui-msg__desc">{err}</p>
-                    </div>
-                </div> :
-                (msg ?
-                    <div className="weui-msg">
-                        <div className="weui-msg__icon-area"><i className="weui-icon-success weui-icon_msg"></i></div>
-                        <div className="weui-msg__text-area">
-                            <h2 className="weui-msg__title">登录成功</h2>
-                            <p className="weui-msg__desc">{msg}</p>
-                        </div>
-                    </div>
-                    :
-                    <div id="loadingToast">
-                        <div className="weui-mask_transparent"></div>
-                        <div className="weui-toast">
-                            <i className="weui-loading weui-icon_toast"></i>
-                            <p className="weui-toast__content">请稍候...</p>
-                        </div>
-                    </div>
-                )
-            }
+           {err ? <ErrMsg errMsg={err}/>:(msg ? <OkMsg title="登录成功" msg={msg}/>: <LoadingToast text="请稍候..." />)}
         </Page>
     )
 }

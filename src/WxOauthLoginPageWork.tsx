@@ -9,8 +9,8 @@ import { NeedUserInfoType } from "./datatype/NeedUserInfoType";
 import { SnsScope } from "./datatype/SnsScope";
 import { randomAlphabetNumber } from "./utils";
 import { WxLoginConfig } from "./Config";
-import { Page } from "./PortLayer";
 import { WebAppLoginHelper } from "./WebAppLoginHelper";
+import { ErrMsg, LoadingToast, Page } from "./WeUIComponents";
 
 /***
  * 将配置的分隔符解析为数字，编码进notify的path中，
@@ -107,22 +107,7 @@ const WxOauthLoginPageWork: React.FC = (props) => {
 
     return (
         <Page>
-            {err ?
-                <div className="weui-msg">
-                    <div className="weui-msg__icon-area"><i className="weui-icon-warn weui-icon_msg"></i></div>
-                    <div className="weui-msg__text-area">
-                        <h2 className="weui-msg__title">出错了</h2>
-                        <p className="weui-msg__desc">{err}</p>
-                    </div>
-                </div> :
-                <div id="loadingToast">
-                    <div className="weui-mask_transparent"></div>
-                    <div className="weui-toast">
-                        <i className="weui-loading weui-icon_toast"></i>
-                        <p className="weui-toast__content">请稍候...</p>
-                    </div>
-                </div>
-            }
+             {err ? <ErrMsg errMsg={err}/>: <LoadingToast text="请稍候..." />}
         </Page>
     )
 }
